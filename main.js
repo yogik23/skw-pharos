@@ -4,9 +4,9 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { delay } from './skw/config.js';
-import { rundaily } from './skw/config.js';
-import { swapandsend } from './skw/config.js';
-import { addWPHRSUSDC } from './skw/config.js';
+import { rundaily } from './daily.js';
+import { swapandsend } from './swap.js';
+import { addWPHRSUSDC } from './pool.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
