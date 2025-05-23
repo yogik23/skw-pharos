@@ -13,10 +13,6 @@ import {
   SWAP_ABI
 } from './skw/config.js';
 
-console.log(tokens.USDC.address);
-await delay(1000);
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
