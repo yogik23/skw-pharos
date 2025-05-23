@@ -4,6 +4,19 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import {
+  tokens,
+  pairs,
+  ROUTER,
+  delay,
+  erc20_abi,
+  SWAP_ABI
+} from './skw/config.js';
+
+console.log(tokens.USDC.address);
+await delay(1000);
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -19,34 +32,6 @@ const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
   .split("\n")
   .map(k => k.trim())
   .filter(k => k.length > 0);
-
-const router = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
-
-const tokens = {
-  USDC: { address: "0xad902cf99c2de2f1ba5ec4d642fd7e49cae9ee37"},
-  WPHRS: { address: "0x76aaada469d23216be5f7c596fa25f282ff9b364"},
-  USDT: { address: "0xed59de2d7ad9c043442e381231ee3646fc3c2939"},
-};
-
-const pairs = [
-  { from: "WPHRS", to: "USDC", amount: "0.0001" },
-  { from: "WPHRS", to: "USDT", amount: "0.0001" },
-  { from: "USDT", to: "WPHRS", amount: "0.01" },
-  { from: "USDT", to: "USDC", amount: "0.01" },
-  { from: "USDC", to: "WPHRS", amount: "0.1" },
-  { from: "USDC", to: "USDT", amount: "0.1" },
-];
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const abi = ["function multicall(uint256, bytes[])"];
-
-const erc20_abi = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function deposit() external payable",
-];
 
 async function approve(wallet, tokenAddress, spenderAddress, amountIn) {
   try {
@@ -139,8 +124,8 @@ async function swap(wallet, pair) {
     sqrtPriceLimitX96: 0,
   });
 
-  const contract = new ethers.Contract(router, abi, wallet);
-  await approve(wallet, fromToken.address, router, amountIn);
+  const contract = new ethers.Contract(ROUTER, SWAP_ABI, wallet);
+  await approve(wallet, fromToken.address, ROUTER, amountIn);
 
   const fromBalanceRaw = await getFormattedBalance(wallet, fromToken.address, 18);
   const fromBalance = parseFloat(fromBalanceRaw).toFixed(3);
@@ -213,29 +198,23 @@ async function sendcoin(wallet) {
   }
 }
 
-async function main() {
-  console.clear();
+async function swapandsend() {
   try {
-    for (const pk of privateKeys) {
-      const wallet = new ethers.Wallet(pk, provider);
-      console.log(chalk.cyan(`🔑 Wallet: ${wallet.address}`));
-
-      for (const pair of pairs) {
-        const repeat = 10;
-        for (let i = 0; i < repeat; i++) {
-          await swap(wallet, pair);
-          await delay(7000);
-        }
+    for (const pair of pairs) {
+      const repeat = 10;
+      for (let i = 0; i < repeat; i++) {
+        await swap(wallet, pair);
+        await delay(7000);
       }
-
-      await sendcoin(wallet);
     }
 
-    await delay(5000);
+    await sendcoin(wallet);
+
+    await delay(7000);
   } catch (error) {
     console.error(`❌ Error:`, error?.response?.data || error.message);
     throw error;
   }
 }
 
-main();
+export { swapandsend };
