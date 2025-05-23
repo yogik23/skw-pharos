@@ -1,4 +1,3 @@
-import { ethers } from "ethers";
 import chalk from "chalk";
 import fs from "fs";
 import path from "path";
@@ -12,21 +11,6 @@ import {
   erc20_abi,
   SWAP_ABI
 } from './skw/config.js';
-
-console.log(tokens.USDC.address);
-await delay(1000);
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
-
-const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf-8")
-  .split("\n")
-  .map(k => k.trim())
-  .filter(k => k.length > 0);
 
 const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
   .split("\n")
