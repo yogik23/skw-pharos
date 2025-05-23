@@ -1,22 +1,7 @@
-import { ethers } from "ethers";
 import chalk from "chalk";
 import axios from "axios";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import userAgents from "./skw/userAgents.js";
 import { delay } from './skw/config.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
-
-const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf-8")
-  .split("\n")
-  .map(k => k.trim())
-  .filter(k => k.length > 0);
 
 const baseHeaders = {
   "accept": "application/json, text/plain, */*",
