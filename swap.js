@@ -13,6 +13,10 @@ import {
   SWAP_ABI
 } from './skw/config.js';
 
+console.log(tokens.USDC.address);
+await delay(1000);
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -194,7 +198,7 @@ async function sendcoin(wallet) {
   }
 }
 
-async function swapandsend() {
+async function swapandsend(wallet) {
   try {
     for (const pair of pairs) {
       const repeat = 10;
