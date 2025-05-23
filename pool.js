@@ -1,8 +1,4 @@
-import { ethers } from "ethers";
 import chalk from "chalk";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import {
   tokens,
@@ -13,17 +9,6 @@ import {
   delay,
   erc20_abi
 } from './skw/config.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
-
-const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf-8")
-  .split("\n")
-  .map(k => k.trim())
-  .filter(k => k.length > 0);
 
 async function getTokenIds(wallet) {
   const contract = new ethers.Contract(LP_ROUTER_ADDRESS, nftAbi, wallet);
@@ -328,7 +313,7 @@ async function addWPHRSUSDC(wallet) {
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   });
 
-  await delay(10000);
+  await delay(5000);
 
   await increaseLiquidityNative({
     wallet,
@@ -338,7 +323,7 @@ async function addWPHRSUSDC(wallet) {
     token1: tokens.USDC.address,
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   });
-  await delay(10000);
+  await delay(5000);
 }
 
 export { addWPHRSUSDC };
