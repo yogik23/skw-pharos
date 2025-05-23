@@ -1,11 +1,11 @@
 import { ethers } from "ethers";
 import chalk from "chalk";
 import axios from "axios";
-import cron from "node-cron";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import userAgents from "./skw/userAgents.js";
+import { delay } from './skw/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,8 +17,6 @@ const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf
   .split("\n")
   .map(k => k.trim())
   .filter(k => k.length > 0);
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const baseHeaders = {
   "accept": "application/json, text/plain, */*",
@@ -79,47 +77,29 @@ async function daily(token, wallet, headers) {
   }
 }
 
-async function startBot() {
-  console.clear();
-  for (const pk of privateKeys) {
-    const wallet = new ethers.Wallet(pk, provider);
-    const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-    const headers = {
-      ...baseHeaders,
-      'user-agent': userAgent
-    };
+async function rundaily(wallet) {
+  const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+  const headers = {
+    ...baseHeaders,
+    'user-agent': userAgent
+  };
 
-    console.log(chalk.hex('#9370DB')(`\n🔑 Wallet: ${wallet.address}`));
+  console.log(chalk.hex('#9370DB')(`\n🔑 Wallet: ${wallet.address}`));
 
-    try {
-      const token = await login(wallet, headers);
-      await daily(token, wallet, headers);
-      await delay(3000);
+  try {
+    const token = await login(wallet, headers);
+    await daily(token, wallet, headers);
+    await delay(3000);
 
-      const dataProfil = await getProfil(token, wallet, headers);
-      const TotalPoints = dataProfil.user_info.TotalPoints;
-      console.log(chalk.hex('#20B2AA')(`🏆 Total Points: ${TotalPoints}`));
+    const dataProfil = await getProfil(token, wallet, headers);
+    const TotalPoints = dataProfil.user_info.TotalPoints;
+    console.log(chalk.hex('#20B2AA')(`🏆 Total Points: ${TotalPoints}`));
 
-    } catch (err) {
-      console.log(chalk.red(`❌ Gagal proses wallet ${wallet.address}: ${err.message}`));
-    }
-
-    await delay(10000);
+  } catch (err) {
+    console.log(chalk.red(`❌ Gagal proses wallet ${wallet.address}: ${err.message}`));
   }
+
+  await delay(7000);
 }
 
-async function main() {
-  cron.schedule('0 1 * * *', async () => { 
-    await startBot();
-    console.log();
-    console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
-    console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
-  });
-
-  await startBot();
-  console.log();
-  console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
-  console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
-}
-
-main();
+export { rundaily };
