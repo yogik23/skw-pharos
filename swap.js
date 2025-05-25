@@ -12,6 +12,9 @@ import {
   SWAP_ABI
 } from './skw/config.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
   .split("\n")
   .map(k => k.trim())
