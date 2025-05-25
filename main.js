@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import chalk from "chalk";
+import cron from "node-cron";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -43,4 +44,18 @@ async function startBot() {
   }
 }
 
-startBot();
+async function main() {
+  cron.schedule('0 1 * * *', async () => { 
+    await startBot();
+    console.log();
+    console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
+    console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
+  });
+
+  await startBot();
+  console.log();
+  console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
+  console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
+}
+
+main();
