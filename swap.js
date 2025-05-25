@@ -124,7 +124,7 @@ async function swap(wallet, pair) {
     try {
       console.log(chalk.hex('#20B2AA')(`🔁 Swapping ${pair.amount} ${pair.from} to ${pair.to}...`));
       const tx = await contract.multicall(
-        Math.floor(Date.now() / 1000),
+        Math.floor(Date.now() / 1000) + 60,
         [calldata],
         {
           gasLimit: 1_000_000,
@@ -170,7 +170,7 @@ async function sendcoin(wallet) {
         await tx.wait();
         console.log(chalk.hex('#32CD32')(`✅ Send Berhasil\n`));
     
-      await delay(3000);
+      await delay(5000);
 
       } else {
       console.log(chalk.yellow(`⚠️ Saldo PHRS tidak cukup untuk send sebesar ${amount}\n`));
