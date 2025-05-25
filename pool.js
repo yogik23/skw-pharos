@@ -343,11 +343,20 @@ async function addWPHRSUSDC(wallet) {
     token0: tokens.WPHRS.address,
     token1: tokens.USDC.address,
     fee: 3000,
-    amount0Desired: "0.002",
+    amount0Desired: "0.001",
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   });
 
   await delay(5000);
+  await addLiquidity({
+    wallet,
+    poolAddress: poolAddressUSDCWPHRS,
+    token0: tokens.WPHRS.address,
+    token1: tokens.USDC.address,
+    fee: 3000,
+    amount0Desired: "0.001",
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+  });
 
   await increaseLiquidityNative({
     wallet,
