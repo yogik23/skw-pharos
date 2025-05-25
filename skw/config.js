@@ -10,10 +10,10 @@ const tokens = {
 const pairs = [
   { from: "WPHRS", to: "USDC", amount: "0.0001" },
   { from: "WPHRS", to: "USDT", amount: "0.0001" },
-  { from: "USDT", to: "WPHRS", amount: "0.01" },
-  { from: "USDT", to: "USDC", amount: "0.01" },
-  { from: "USDC", to: "WPHRS", amount: "0.1" },
-  { from: "USDC", to: "USDT", amount: "0.1" },
+  { from: "USDT", to: "WPHRS", amount: "0.03" },
+  { from: "USDT", to: "USDC", amount: "0.03" },
+  { from: "USDC", to: "WPHRS", amount: "0.03" },
+  { from: "USDC", to: "USDT", amount: "0.03" },
 ];
 
 const erc20_abi = [
