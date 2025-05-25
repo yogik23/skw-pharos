@@ -69,8 +69,6 @@ async function rundaily(wallet) {
     'user-agent': userAgent
   };
 
-  console.log(chalk.hex('#9370DB')(`\n🔑 Wallet: ${wallet.address}`));
-
   try {
     const token = await login(wallet, headers);
     await daily(token, wallet, headers);
