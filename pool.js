@@ -375,14 +375,4 @@ async function addWPHRSUSDC(wallet) {
   await delay(5000);
 }
 
-async function main() {
-  console.clear();
-  for (const pk of privateKeys) {
-    const wallet = new ethers.Wallet(pk, provider);
-    console.log(chalk.cyan(`🔑 Wallet: ${wallet.address}`));
-
-    await addWPHRSUSDC(wallet);
-  }
-}
-
-main().catch(console.error);
+export { addWPHRSUSDC };
