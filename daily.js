@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import chalk from "chalk";
 import axios from "axios";
 import userAgents from "./skw/userAgents.js";
