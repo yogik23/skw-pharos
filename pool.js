@@ -12,12 +12,25 @@ import {
 
 async function getTokenIds(wallet) {
   const contract = new ethers.Contract(LP_ROUTER_ADDRESS, nftAbi, wallet);
-  const balance = await contract.balanceOf(wallet.address);
+  const positionManager = new ethers.Contract(LP_ROUTER_ADDRESS, LP_ROUTER_ABI, wallet);
 
+  const balance = await contract.balanceOf(wallet.address);
   const tokenIds = [];
+
   for (let i = 0; i < balance; i++) {
     const tokenId = await contract.tokenOfOwnerByIndex(wallet.address, i);
-    tokenIds.push(tokenId.toString());
+
+    try {
+      const pos = await positionManager.positions(tokenId);
+
+      const liquidity = pos.liquidity;
+
+      if (liquidity > 0) {
+        tokenIds.push(tokenId.toString());
+      }
+    } catch (err) {
+      console.error(`Error fetching liquidity for tokenId ${tokenId}:`, err);
+    }
   }
 
   return tokenIds;
@@ -233,6 +246,43 @@ async function increaseLiquidityNative({
   }
 }
 
+async function colectfee(wallet) {
+  try {
+    const tokenIds = await getTokenIds(wallet);
+    if (tokenIds.length === 0) {
+      console.log(chalk.yellow("⚠️  Wallet tidak punya LP token."));
+      return;
+    }
+
+    const selectedTokenId = tokenIds[Math.floor(Math.random() * tokenIds.length)];
+    console.log(` Pool yg dicollect ${selectedTokenId}`);
+
+    const manager = new ethers.Contract(LP_ROUTER_ADDRESS, LP_ROUTER_ABI, wallet);
+    const iface = new ethers.Interface(LP_ROUTER_ABI);
+    const maxUint128 = (2n ** 128n - 1n).toString();
+
+    const collectCalldata = iface.encodeFunctionData("collect", [
+      {
+        tokenId: selectedTokenId,
+        recipient: wallet.address,
+        amount0Requested: maxUint128,
+        amount1Requested: maxUint128,
+      },
+    ]);
+
+    const multicalls = [collectCalldata];
+
+    console.log(`💡 Colectfee `);
+    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
+    await tx.wait();
+    console.log(`✅ Colectfee Berhasil\n`);
+  } catch (e) {
+    console.log(chalk.red(`❌ Gagal Colectfee: ${e.reason || e.message || "unknown error"}`));
+    console.log();
+  }
+}
+
 async function removeLiquidity(wallet) {
   try {
     const tokenIds = await getTokenIds(wallet);
@@ -241,7 +291,9 @@ async function removeLiquidity(wallet) {
       return;
     }
 
-    const selectedTokenId = tokenIds[tokenIds.length - 1]; // Ambil tokenId terakhir
+    const selectedTokenId = tokenIds[tokenIds.length - 1];
+    console.log(` Pool yg Tersedia ${tokenIds}`);
+    console.log(` Pool yg diremove ${selectedTokenId}`);
 
     const liquidity = await getLiquidity(wallet, selectedTokenId);
 
@@ -271,19 +323,6 @@ async function removeLiquidity(wallet) {
 
     const multicalls = [decreaseCalldata, collectCalldata];
 
-    // const unwrapWETH9Calldata = iface.encodeFunctionData("unwrapWETH9", [
-    //   ethers.MaxUint256,
-    //   recipient: wallet.address,
-    // ]);
-    // multicalls.push(unwrapWETH9Calldata);
-
-    // const sweepTokenCalldata = iface.encodeFunctionData("sweepToken", [
-    //   tokens.USDC.address,
-    //   ethers.MaxUint256,
-    //   recipient: wallet.address,
-    // ]);
-    // multicalls.push(sweepTokenCalldata);
-
     console.log(`💡 Remove Liquidity`);
     const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
     console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
@@ -296,12 +335,7 @@ async function removeLiquidity(wallet) {
 }
 
 async function addWPHRSUSDC(wallet) {
-  console.clear();
-
   const poolAddressUSDCWPHRS = "0x0373a059321219745aee4fad8a942cf088be3d0e";
-
-  await removeLiquidity(wallet);
-  await delay(10000);
 
   await addLiquidity({
     wallet,
@@ -324,6 +358,22 @@ async function addWPHRSUSDC(wallet) {
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   });
   await delay(5000);
+
+  await colectfee(wallet);
+  await delay(5000);
+
+  await removeLiquidity(wallet);
+  await delay(5000);
 }
 
-export { addWPHRSUSDC };
+async function main() {
+  console.clear();
+  for (const pk of privateKeys) {
+    const wallet = new ethers.Wallet(pk, provider);
+    console.log(chalk.cyan(`🔑 Wallet: ${wallet.address}`));
+
+    await addWPHRSUSDC(wallet);
+  }
+}
+
+main().catch(console.error);
