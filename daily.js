@@ -63,6 +63,35 @@ async function daily(token, wallet, headers) {
   }
 }
 
+function escapeMarkdownV2(text) {
+  return text.replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&');
+}
+
+async function sendTG(address, TotalPoints, retries = 3) {
+  const date = escapeMarkdownV2(new Date().toISOString().split('T')[0]);
+  const newpoint = escapeMarkdownV2(formatPoints(TotalPoints));
+  const newAddress = escapeMarkdownV2(address);
+  const message = `🚀 *PHAROS Testnet*\n📅 *${date}*\n💦 *${newAddress}*\n➡️ *Points: ${newpoint}*`;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`,
+        {
+          chat_id: process.env.CHAT_ID,
+          text: message,
+          parse_mode: "MarkdownV2",
+        }
+      );
+      console.log(chalk.hex('#FF8C00')(`✅ Message sent to Telegram successfully!\n`));
+      return response.data;
+    } catch (error) {
+      if (attempt < retries) await delay(2000);
+      else return null;
+    }
+  }
+}
+
 async function rundaily(wallet) {
   const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
   const headers = {
@@ -78,6 +107,7 @@ async function rundaily(wallet) {
     const dataProfil = await getProfil(token, wallet, headers);
     const TotalPoints = dataProfil.user_info.TotalPoints;
     console.log(chalk.hex('#20B2AA')(`🏆 Total Points: ${TotalPoints}`));
+    await sendTG(wallet.address, TotalPoints);
 
   } catch (err) {
     console.log(chalk.red(`❌ Gagal proses wallet ${wallet.address}: ${err.message}`));
