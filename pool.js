@@ -348,7 +348,7 @@ async function addWPHRSUSDC(wallet) {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     });
 
-    await delay(5000);
+    await delay(8000);
     await addLiquidity({
       wallet,
       poolAddress: poolAddressUSDCWPHRS,
@@ -359,6 +359,7 @@ async function addWPHRSUSDC(wallet) {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     });
 
+    await delay(8000);
     await increaseLiquidityNative({
       wallet,
       amount0Desired: "0.002",
@@ -367,13 +368,14 @@ async function addWPHRSUSDC(wallet) {
       token1: tokens.USDC.address,
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     });
-    await delay(5000);
-
+    
+    await delay(8000);
     await colectfee(wallet);
-    await delay(5000);
-
+    
+    await delay(8000);
     await removeLiquidity(wallet);
-    await delay(5000);
+    
+    await delay(8000);
   } catch (e) {
     console.log(chalk.red(`❌ Erorr: ${e.reason || e.message || "unknown error"}`));
     console.log();
