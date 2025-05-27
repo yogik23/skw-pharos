@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import chalk from "chalk";
 import axios from "axios";
-require("dotenv").config();
+import dotenv from 'dotenv';
 import userAgents from "./skw/userAgents.js";
 import { delay } from './skw/config.js';
 
