@@ -174,7 +174,7 @@ async function sendcoin(wallet) {
         await tx.wait();
         console.log(chalk.hex('#32CD32')(`✅ Send Berhasil\n`));
     
-      await delay(5000);
+      await delay(8000);
 
       } else {
       console.log(chalk.yellow(`⚠️ Saldo PHRS tidak cukup untuk send sebesar ${amount}\n`));
@@ -192,13 +192,13 @@ async function swapandsend(wallet) {
       const repeat = 10;
       for (let i = 0; i < repeat; i++) {
         await swap(wallet, pair);
-        await delay(7000);
+        await delay(8000);
       }
     }
 
     await sendcoin(wallet);
 
-    await delay(7000);
+    await delay(8000);
   } catch (error) {
     console.error(`❌ Error:`, error?.response?.data || error.message);
     throw error;
