@@ -13,10 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider({
-  url: RPC,
-  timeout: 60000
-});
+const provider = new ethers.JsonRpcProvider(RPC);
 
 const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf-8")
   .split("\n")
