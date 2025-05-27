@@ -30,20 +30,18 @@ async function startBot() {
     console.log(chalk.hex('#9370DB')(`\n🔑 Wallet: ${wallet.address}`));
 
     try {
-      await rundaily(wallet);
-      await delay(3000);
-
       await swapandsend(wallet);
       await delay(3000);
 
       await addWPHRSUSDC(wallet);
+      await delay(3000);
 
+      await rundaily(wallet);
+      await delay(3000);
 
     } catch (err) {
       console.log(chalk.red(`❌ Gagal proses wallet ${wallet.address}: ${err.message}`));
     }
-
-    await delay(5000);
   }
 }
 
