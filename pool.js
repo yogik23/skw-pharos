@@ -336,44 +336,48 @@ async function removeLiquidity(wallet) {
 }
 
 async function addWPHRSUSDC(wallet) {
-  const poolAddressUSDCWPHRS = "0x0373a059321219745aee4fad8a942cf088be3d0e";
+  try {
+    const poolAddressUSDCWPHRS = "0x0373a059321219745aee4fad8a942cf088be3d0e";
+    await addLiquidity({
+      wallet,
+      poolAddress: poolAddressUSDCWPHRS,
+      token0: tokens.WPHRS.address,
+      token1: tokens.USDC.address,
+      fee: 3000,
+      amount0Desired: "0.001",
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    });
 
-  await addLiquidity({
-    wallet,
-    poolAddress: poolAddressUSDCWPHRS,
-    token0: tokens.WPHRS.address,
-    token1: tokens.USDC.address,
-    fee: 3000,
-    amount0Desired: "0.001",
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-  });
+    await delay(5000);
+    await addLiquidity({
+      wallet,
+      poolAddress: poolAddressUSDCWPHRS,
+      token0: tokens.WPHRS.address,
+      token1: tokens.USDC.address,
+      fee: 3000,
+      amount0Desired: "0.001",
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    });
 
-  await delay(5000);
-  await addLiquidity({
-    wallet,
-    poolAddress: poolAddressUSDCWPHRS,
-    token0: tokens.WPHRS.address,
-    token1: tokens.USDC.address,
-    fee: 3000,
-    amount0Desired: "0.001",
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-  });
+    await increaseLiquidityNative({
+      wallet,
+      amount0Desired: "0.002",
+      poolAddress: poolAddressUSDCWPHRS,
+      token0: tokens.WPHRS.address,
+      token1: tokens.USDC.address,
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    });
+    await delay(5000);
 
-  await increaseLiquidityNative({
-    wallet,
-    amount0Desired: "0.002",
-    poolAddress: poolAddressUSDCWPHRS,
-    token0: tokens.WPHRS.address,
-    token1: tokens.USDC.address,
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-  });
-  await delay(5000);
+    await colectfee(wallet);
+    await delay(5000);
 
-  await colectfee(wallet);
-  await delay(5000);
-
-  await removeLiquidity(wallet);
-  await delay(5000);
+    await removeLiquidity(wallet);
+    await delay(5000);
+  } catch (e) {
+    console.log(chalk.red(`❌ Erorr: ${e.reason || e.message || "unknown error"}`));
+    console.log();
+  }
 }
 
 export { addWPHRSUSDC };
