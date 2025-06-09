@@ -16,6 +16,9 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const RPC = "https://testnet.dplabs-internal.com";
+const provider = new ethers.JsonRpcProvider(RPC);
+
 const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
   .split("\n")
   .map(k => k.trim())
