@@ -86,7 +86,6 @@ async function sendTG(address, TotalPoints) {
       console.log(chalk.hex('#FF8C00')(`✅ Message sent to Telegram successfully!\n`));
       return response.data;
     } catch (error) {
-      console.error('❌ Error sent to Telegram :', error.response?.data || error.message);
       if (attempt < retries) await delay(2000);
       else return null;
     }
