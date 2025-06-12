@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 const ROUTER = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
 const LP_ROUTER_ADDRESS = "0xf8a1d4ff0f9b9af7ce58e1fc1833688f3bfd6115";
 
@@ -52,6 +54,25 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function Retry(asyncFn, label = "Operation", retries = 10, timeout = 30000) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await asyncFn();
+    } catch (err) {
+      attempt++;
+      const waitTime = timeout * attempt;
+
+      if (attempt < retries) {
+        await delay(waitTime);
+      } else {
+        console.error(chalk.red(`❌ [${label}] Failed after ${retries} attempts\n`));
+        throw err;
+      }
+    }
+  }
+}
+
 export {
   tokens,
   pairs,
@@ -62,5 +83,6 @@ export {
   POOL_ABI,
   LP_ROUTER_ABI,
   nftAbi,
-  delay
+  delay,
+  Retry
 };
