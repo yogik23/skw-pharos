@@ -2,12 +2,14 @@ import { ethers } from "ethers";
 import chalk from "chalk";
 
 import {
+  provider,
   tokens,
   LP_ROUTER_ADDRESS,
   POOL_ABI,
   LP_ROUTER_ABI,
   nftAbi,
   delay,
+  Retry,
   erc20_abi
 } from './skw/config.js';
 
@@ -15,14 +17,14 @@ async function getTokenIds(wallet) {
   const contract = new ethers.Contract(LP_ROUTER_ADDRESS, nftAbi, wallet);
   const positionManager = new ethers.Contract(LP_ROUTER_ADDRESS, LP_ROUTER_ABI, wallet);
 
-  const balance = await contract.balanceOf(wallet.address);
+  const balance = await Retry(() => contract.balanceOf(wallet.address));
   const tokenIds = [];
 
   for (let i = 0; i < balance; i++) {
-    const tokenId = await contract.tokenOfOwnerByIndex(wallet.address, i);
+    const tokenId = await Retry(() => contract.tokenOfOwnerByIndex(wallet.address, i));
 
     try {
-      const pos = await positionManager.positions(tokenId);
+      const pos = await Retry(() => positionManager.positions(tokenId));
 
       const liquidity = pos.liquidity;
 
@@ -40,7 +42,7 @@ async function getTokenIds(wallet) {
 async function getLiquidity(wallet, tokenIds) {
   try {
     const positionManager = new ethers.Contract(LP_ROUTER_ADDRESS, LP_ROUTER_ABI, wallet);
-    const pos = await positionManager.positions(tokenIds);
+    const pos = await Retry(() => positionManager.positions(tokenIds));
     return pos.liquidity.toString();
   } catch (err) {
     console.error(`Error getting liquidity for tokenIds:`, err);
@@ -117,18 +119,20 @@ async function addLiquidity({
   const token0Contract = new ethers.Contract(token0, erc20_abi, wallet);
   const token1Contract = new ethers.Contract(token1, erc20_abi, wallet);
 
-  const allowance0 = await token0Contract.allowance(wallet.address, LP_ROUTER_ADDRESS);
+  const allowance0 = await Retry(() => token0Contract.allowance(wallet.address, LP_ROUTER_ADDRESS));
   if (allowance0 < parsedAmount0) {
     console.log(`🔄 Approving token0...`);
-    const tx = await token0Contract.approve(LP_ROUTER_ADDRESS, ethers.MaxUint256);
-    await tx.wait();
+    const tx = await Retry(() => token0Contract.approve(LP_ROUTER_ADDRESS, ethers.MaxUint256));
+    await delay(10000);
+    await Retry(() => tx.wait());
   }
 
-  const allowance1 = await token1Contract.allowance(wallet.address, LP_ROUTER_ADDRESS);
+  const allowance1 = await Retry(() => token1Contract.allowance(wallet.address, LP_ROUTER_ADDRESS));
   if (allowance1 < parsedAmount1) {
     console.log(`🔄 Approving token1...`);
-    const tx = await token1Contract.approve(LP_ROUTER_ADDRESS, ethers.MaxUint256);
-    await tx.wait();
+    const tx = await Retry(() => token1Contract.approve(LP_ROUTER_ADDRESS, ethers.MaxUint256));
+    await delay(10000);
+    await Retry(() => tx.wait());
   }
 
   const tickSpacing = 60n;
@@ -163,10 +167,11 @@ async function addLiquidity({
     };
 
     const gasLimit = 700000;
-    const tx = await positionManager.mint(params, { gasLimit });
+    const tx = await Retry(() => positionManager.mint(params, { gasLimit }));
     console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
 
-    const receipt = await tx.wait();
+    await delay(10000);
+    const receipt = await Retry(() => tx.wait());
     const iface = new ethers.Interface(["event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"]);
     let tokenId = null;
     for (const log of receipt.logs) {
@@ -230,16 +235,17 @@ async function increaseLiquidityNative({
 
     const refundCallData = iface.encodeFunctionData("refundETH");
 
-    const tx = await positionManager.multicall(
+    const tx = await Retry(() => positionManager.multicall(
       [increaseCallData, refundCallData],
       {
         value: parsedAmount0,
         gasLimit: 600000,
       }
-    );
+    ));
 
     console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
-    await tx.wait();
+    await delay(10000);
+    await Retry(() => tx.wait());
     console.log(`✅ Liquidity increased\n`);
   } catch (e) {
     console.log(chalk.red(`❌ Gagal increased liquidity: ${e.reason || e.message || 'unknown error'}`));
@@ -274,9 +280,10 @@ async function colectfee(wallet) {
     const multicalls = [collectCalldata];
 
     console.log(`💡 Colectfee `);
-    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    const tx = await Retry(() => manager.multicall(multicalls, { gasLimit: 600000 }));
     console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
-    await tx.wait();
+    await delay(10000);
+    await Retry(() => tx.wait());
     console.log(`✅ Colectfee Berhasil\n`);
   } catch (e) {
     console.log(chalk.red(`❌ Gagal Colectfee: ${e.reason || e.message || "unknown error"}`));
@@ -325,9 +332,10 @@ async function removeLiquidity(wallet) {
     const multicalls = [decreaseCalldata, collectCalldata];
 
     console.log(`💡 Remove Liquidity`);
-    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    const tx = await Retry(() => manager.multicall(multicalls, { gasLimit: 600000 }));
     console.log(`⏳ Tx Dikirim ke Blockcahin!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`);
-    await tx.wait();
+    await delay(10000);
+    await Retry(() => tx.wait());
     console.log(`✅ Remove Liquidity Berhasil\n`);
   } catch (e) {
     console.log(chalk.red(`❌ Gagal remove liquidity: ${e.reason || e.message || "unknown error"}`));
