@@ -5,19 +5,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import {
+  provider,
   tokens,
   pairs,
   ROUTER,
   delay,
+  Retry,
   erc20_abi,
   SWAP_ABI
 } from './skw/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
 
 const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
   .split("\n")
@@ -27,11 +26,11 @@ const address = fs.readFileSync(path.join(__dirname, "address.txt"), "utf-8")
 async function approve(wallet, tokenAddress, spenderAddress, amountIn) {
   try {
     const Contract = new ethers.Contract(tokenAddress, erc20_abi, wallet);
-    const allowance = await Contract.allowance(wallet.address, spenderAddress);
+    const allowance = await Retry(() => Contract.allowance(wallet.address, spenderAddress));
     if (allowance < amountIn) {
       console.log(chalk.hex('#20B2AA')(`🔓 Approving ${tokenAddress}`));
-      const tx = await Contract.approve(spenderAddress, ethers.MaxUint256);
-      await tx.wait();
+      const tx = await Retry(() => Contract.approve(spenderAddress, ethers.MaxUint256));
+      await Retry(() => tx.wait());
       console.log(chalk.hex('#32CD32')(`✅ Approved`));
     }
   } catch (error) {
@@ -42,7 +41,7 @@ async function approve(wallet, tokenAddress, spenderAddress, amountIn) {
 async function checkBalance(wallet, tokenAddress) {
   try {
     const Contract = new ethers.Contract(tokenAddress, erc20_abi, wallet);
-    const balance = await Contract.balanceOf(wallet.address);
+    const balance = await Retry(() => Contract.balanceOf(wallet.address));
     return balance;
   } catch (error) {
     console.error(`Failed to check balance for token ${tokenAddress}:`, error);
@@ -68,7 +67,7 @@ async function deposit(wallet) {
     const WPHRSBalanceRaw = await getFormattedBalance(wallet, tokens.WPHRS.address, 18);
     const WPHRSBalance = parseFloat(WPHRSBalanceRaw).toFixed(5);
 
-    const getBalance = await provider.getBalance(wallet.address);
+    const getBalance = await Retry(() => provider.getBalance(wallet.address));
     const toBalance = ethers.formatUnits(getBalance, 18);
     const balance = parseFloat(toBalance).toFixed(5);
 
@@ -79,13 +78,13 @@ async function deposit(wallet) {
     const contract = new ethers.Contract(tokens.WPHRS.address, erc20_abi, wallet);
 
     console.log(chalk.hex('#20B2AA')(`🔁 Swap ${amount} PHRS ke WPHRS `));
-    const tx = await contract.deposit({
+    const tx = await Retry(() => contract.deposit({
       value: ethers.parseEther(amount),
       gasLimit: 100_000,
-    });
+    }));
 
     console.log(chalk.hex('#FF8C00')(`⏳ Tx dikirim ke blockchain!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`));
-    await tx.wait();
+    await Retry(() => tx.wait());
     console.log(chalk.hex('#66CDAA')(`✅ Swap Berhasil\n`));
 
     await delay(8000);
@@ -130,16 +129,17 @@ async function swap(wallet, pair) {
   if (fromBalance > (pair.amount)) {
     try {
       console.log(chalk.hex('#20B2AA')(`🔁 Swapping ${pair.amount} ${pair.from} to ${pair.to}...`));
-      const tx = await contract.multicall(
+      const tx = await Retry(() => contract.multicall(
         Math.floor(Date.now() / 1000) + 60,
         [calldata],
         {
           gasLimit: 1_000_000,
           gasPrice: 0,
         }
-      );
+      ));
       console.log(chalk.hex('#66CDAA')(`⏳ Tx dikirim ke blockchain!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`));
-      await tx.wait();
+      await delay(10000);
+      await Retry(() => tx.wait());
       console.log(chalk.hex('#32CD32')(`✅ Swap Berhasil\n`));
     } catch (err) {
       console.error(chalk.red(`❌ Error during swap for ${wallet.address}: ${err.message}\n`));
@@ -153,7 +153,7 @@ async function sendcoin(wallet) {
   try {
     const repeat = 10;
     for (let i = 0; i < repeat; i++) {
-      const getBalance = await provider.getBalance(wallet.address);
+      const getBalance = await Retry(() => provider.getBalance(wallet.address));
       const toBalance = ethers.formatUnits(getBalance, 18);
       const balance = parseFloat(toBalance).toFixed(5);
 
@@ -166,15 +166,16 @@ async function sendcoin(wallet) {
       if (getBalance > (value)) {
 
         console.log(chalk.hex('#20B2AA')(`🔁 Send ${amount} PHRS to ${toAddress}`));
-        const tx = await wallet.sendTransaction({
+        const tx = await Retry(() => wallet.sendTransaction({
           to: toAddress,
           value: value,
           gasLimit: 300000,
-          gasPrice: ethers.parseUnits('0', 'gwei'),
-        });
+          gasPrice: ethers.parseUnits('1', 'gwei'),
+        }));
 
         console.log(chalk.hex('#FF8C00')(`⏳ Tx dikirim ke blockchain!\n🌐 https://testnet.pharosscan.xyz/tx/${tx.hash}`));
-        await tx.wait();
+        await delay(10000);
+        await Retry(() => tx.wait());
         console.log(chalk.hex('#32CD32')(`✅ Send Berhasil\n`));
     
       await delay(8000);
