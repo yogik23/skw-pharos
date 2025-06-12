@@ -4,16 +4,13 @@ import cron from "node-cron";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { delay } from './skw/config.js';
+import { delay, provider } from './skw/config.js';
 import { rundaily } from './daily.js';
 import { swapandsend } from './swap.js';
 import { addWPHRSUSDC } from './pool.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
 
 const privateKeys = fs.readFileSync(path.join(__dirname, "privatekey.txt"), "utf-8")
   .split("\n")
@@ -43,17 +40,18 @@ async function startBot() {
 }
 
 async function main() {
+  const date = new Date().toISOString().split('T')[0];
   cron.schedule('0 1 * * *', async () => { 
     await startBot();
     console.log();
-    console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
-    console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
+    console.log(chalk.hex('#FF00FF')(`${date} Cron AKTIF`));
+    console.log(chalk.hex('#FF1493')('Besok Jam 08:00 WIB Autobot Akan Run'));
   });
 
   await startBot();
   console.log();
-  console.log(chalk.hex('#FF00FF')(`Cron AKTIF`));
-  console.log(chalk.hex('#FF1493')('Jam 08:00 WIB Autobot Akan Run'));
+  console.log(chalk.hex('#FF00FF')(`${date} Cron AKTIF`));
+  console.log(chalk.hex('#FF1493')('Besok Jam 08:00 WIB Autobot Akan Run'));
 }
 
 main();
