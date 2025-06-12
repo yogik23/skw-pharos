@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { ethers } from "ethers";
 
 const RPC = "https://testnet.dplabs-internal.com";
 const provider = new ethers.JsonRpcProvider(RPC);
