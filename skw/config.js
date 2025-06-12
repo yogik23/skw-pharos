@@ -1,5 +1,8 @@
 import chalk from "chalk";
 
+const RPC = "https://testnet.dplabs-internal.com";
+const provider = new ethers.JsonRpcProvider(RPC);
+
 const ROUTER = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
 const LP_ROUTER_ADDRESS = "0xf8a1d4ff0f9b9af7ce58e1fc1833688f3bfd6115";
 
@@ -74,6 +77,7 @@ async function Retry(asyncFn, label = "Operation", retries = 10, timeout = 30000
 }
 
 export {
+  provider,
   tokens,
   pairs,
   ROUTER,
