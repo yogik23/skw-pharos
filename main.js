@@ -126,12 +126,12 @@ async function swapLPfaro(wallet) {
   //await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountWPHRStoUSDT);
   //await delay(randomdelay());
 
-  const amountUSDCtoUSDC = randomAmount(0.001, 0.005, 3);
+  const amountUSDCtoUSDC = randomAmount(0.0001, 0.005, 4);
   await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountUSDCtoUSDC);
   await delay(randomdelay());
 
-  const amountUSDTtoUSDT = randomAmount(0.01, 0.1, 2);
-  await addLiquidityFaroswap(wallet, USDT_address, WPHRS_FAROSWAP, amountUSDTtoUSDT);
+  const amountUSDTtoUSDT = randomAmount(0.001, 0.001, 3);
+  await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountUSDTtoUSDT);
   await delay(randomdelay());
 }
 
