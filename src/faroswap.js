@@ -76,6 +76,7 @@ export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
 
 export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
   try {
+    logger.start(`Processing Swap in Faroswap`);
     const { balancewei: balanceweiIn, symbol: symbolIn, decimal: decimalIn } = await cekbalance(wallet, tokenIn);
     const { symbol: symbolOut, decimal: decimalOut } = await cekbalance(wallet, tokenOut);
     const amountIn = ethers.parseUnits(amount, decimalIn);
