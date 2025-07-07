@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { logger } from "../skw/logger.js";
 import {
- WPHRS_ZENITH,
  ZENITH_ROUTER,
  ZENITH_ADDRESS,
  explorer,
@@ -29,32 +28,6 @@ import {
  getAmount1FromAmount0,
  getLiquidity,
 } from "../skw/helper.js";
-
-export async function deposit(wallet, amount) {
-  try {
-    const getBalance = await provider.getBalance(wallet.address);
-    const balance = parseFloat(ethers.formatUnits(getBalance, 18)).toFixed(5);
-    const { balancewei, decimal } = await cekbalance(wallet, WPHRS_ZENITH);
-    const WPHRSBalance = parseFloat(ethers.formatUnits(balancewei, decimal)).toFixed(5);
-
-    logger.balance(`Balance PHRS: ${balance}`);
-    const abi = ["function deposit() external payable"];
-    const contract = new ethers.Contract(WPHRS_ZENITH, abi, wallet);
-
-    logger.start(`Swap ${amount} PHRS ke WPHRS `);
-    const tx = await contract.deposit({
-      value: ethers.parseEther(amount),
-      gasLimit: 100_000,
-    });
-
-    logger.send(`Tx dikirim! ->> ${explorer}${tx.hash}`);
-    await tx.wait();
-    logger.succes(`Swap Berhasil\n`);
-
-  } catch (err) {
-    logger.fail(`Error during deposit : ${err.message}\n`);
-  }
-}
 
 export async function swap(wallet, tokenIn, tokenOut, amount) {
   logger.start(`Processing Swap on Zenith`);
