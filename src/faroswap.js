@@ -101,7 +101,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
   }
 }
 
-export export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
+export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
   try {
     logger.start(`Processing Add New Liquidity`);
     const { balancewei: balanceweiIn, symbol: symbolIn, decimal: decimalIn } = await cekbalance(wallet, tokenIn);
