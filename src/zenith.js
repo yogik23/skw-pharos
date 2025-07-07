@@ -1,0 +1,322 @@
+import { ethers } from "ethers";
+import { logger } from "../skw/logger.js";
+import {
+ WPHRS_ZENITH,
+ ZENITH_ROUTER,
+ ZENITH_ADDRESS,
+ explorer,
+} from "../skw/contract.js";
+
+import {
+ provider,
+ delay,
+ buildExactInputSingle,
+} from "../skw/config.js";
+
+import {
+ SWAP_ABI,
+ POOL_ABI,
+ LP_ROUTER_ABI,
+ nftAbi,
+} from "../skw/abis.js";
+
+import {
+ approve,
+ cekbalance,
+ getPoolAddress,
+ getPoolInfo,
+ getTokenIds,
+ getAmount1FromAmount0,
+ getLiquidity,
+} from "../skw/helper.js";
+
+export async function deposit(wallet, amount) {
+  try {
+    const getBalance = await provider.getBalance(wallet.address);
+    const balance = parseFloat(ethers.formatUnits(getBalance, 18)).toFixed(5);
+    const { balancewei, decimal } = await cekbalance(wallet, WPHRS_ZENITH);
+    const WPHRSBalance = parseFloat(ethers.formatUnits(balancewei, decimal)).toFixed(5);
+
+    logger.balance(`Balance PHRS: ${balance}`);
+    const abi = ["function deposit() external payable"];
+    const contract = new ethers.Contract(WPHRS_ZENITH, abi, wallet);
+
+    logger.start(`Swap ${amount} PHRS ke WPHRS `);
+    const tx = await contract.deposit({
+      value: ethers.parseEther(amount),
+      gasLimit: 100_000,
+    });
+
+    logger.send(`Tx dikirim! ->> ${explorer}${tx.hash}`);
+    await tx.wait();
+    logger.succes(`Swap Berhasil\n`);
+
+  } catch (err) {
+    logger.fail(`Error during deposit : ${err.message}\n`);
+  }
+}
+
+export async function swap(wallet, tokenIn, tokenOut, amount) {
+  logger.start(`Processing Swap on Zenith`);
+  const { balancewei: balanceweiIn, symbol: symbolIn, decimal: decimalIn } = await cekbalance(wallet, tokenIn);
+  const { balancewei: balanceweiOut, symbol: symbolOut, decimal: decimalOut } = await cekbalance(wallet, tokenOut);
+  const amountIn = ethers.parseUnits(amount, decimalIn);
+
+  const calldata = buildExactInputSingle({
+    tokenIn: tokenIn,
+    tokenOut: tokenOut,
+    fee: 500,
+    recipient: wallet.address,
+    amountIn,
+    amountOutMinimum: 0,
+    sqrtPriceLimitX96: 0,
+  });
+
+  const contract = new ethers.Contract(ZENITH_ROUTER, SWAP_ABI, wallet);
+  await approve(wallet, tokenIn, ZENITH_ROUTER, amountIn);
+
+  if (balanceweiIn > amountIn) {
+    try {
+      logger.start(`Starting swap ${amount} ${symbolIn} to ${symbolOut}...`);
+      const tx = await contract.multicall(
+        Math.floor(Date.now() / 1000) + 60,
+        [calldata],
+        {
+          gasLimit: 1_000_000,
+          gasPrice: 0,
+        }
+      );
+
+      logger.send(`Tx dikirim! ->> ${explorer}${tx.hash}`);
+      await tx.wait();
+      logger.succes(`Swap Berhasil\n`);
+    } catch (err) {
+      logger.fail(`Error during swap for ${wallet.address}: ${err.message}\n`);
+    }
+  } else {
+    logger.warn(`Saldo tidak cukup untuk swap\n`);
+  }
+}
+
+export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) {
+  logger.start(`Processing Add New Liquidity`);
+  const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, token0);
+  const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, token1);
+  const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+  const { poolAddress } = await getPoolAddress(token0, token1, ZENITH_ADDRESS, fee);
+
+  const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
+  const poolInfo = await getPoolInfo(poolAddress, token0, token1);
+
+  const amount1Desired = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
+
+  const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
+  const parsedAmount1 = ethers.parseUnits(amount1Desired, decimals1);
+
+  await approve(wallet, token0, ZENITH_ADDRESS, parsedAmount0);
+  await approve(wallet, token1, ZENITH_ADDRESS, parsedAmount1);
+  logger.start(`Starting Add LP ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
+
+
+  const tickSpacing = 60n;
+  const tickCurrent = BigInt(poolInfo.tickCurrent);
+  const nearestTick = (tickCurrent / tickSpacing) * tickSpacing;
+  const tickLower = nearestTick - tickSpacing * 10n;
+  const tickUpper = nearestTick + tickSpacing * 10n;
+
+  if (tickLower >= tickUpper) {
+    throw new Error('tickLower harus lebih kecil dari tickUpper');
+  }
+
+  if (tickLower < -8388608 || tickUpper > 8388607) {
+    throw new Error("tickLower atau tickUpper di luar range int24");
+  }
+ 
+  try {
+    const params = {
+      token0,
+      token1,
+      fee,
+      tickLower,
+      tickUpper,
+      amount0Desired: parsedAmount0,
+      amount1Desired: parsedAmount1,
+      amount0Min: 0,
+      amount1Min: 0,
+      recipient: wallet.address,
+      deadline,
+    };
+
+    const gasLimit = 700000;
+    const tx = await positionManager.mint(params, { gasLimit });
+    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
+
+    const receipt = await tx.wait();
+    const iface = new ethers.Interface(["event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"]);
+    let tokenId = null;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = iface.parseLog(log);
+        if (parsed.name === "Transfer" && parsed.args.from === ethers.ZeroAddress) {
+          tokenId = parsed.args.tokenId;
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (tokenId) {
+      logger.succes(`Add New Liquidity berhasil`);
+      logger.info(`Posisi New Liquidity id : ${tokenId}\n`);
+    } else {
+      logger.warn(`TokenId tidak ditemukan dari event Transfer\n`);
+    }
+  } catch (err) {
+    logger.fail(`Gagal add liquidity: ${err.reason || err.message || 'unknown error'}\n`);
+  }
+}
+
+export async function increaseLiquidity(wallet, token0, token1, amount0Desired, fee) {
+  try {
+    logger.start(`Processing Increase Liquidity`);
+    const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, token0);
+    const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, token1);
+    const { poolAddress } = await getPoolAddress(token0, token1, ZENITH_ADDRESS, fee);
+
+    const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
+    const poolInfo = await getPoolInfo(poolAddress, token0, token1);
+
+    const amount1Desired1 = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
+    const amount1Desired = parseFloat(amount1Desired1).toFixed(6);
+
+    const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
+    const parsedAmount1 = ethers.parseUnits(amount1Desired, decimals1);
+
+    const iface = new ethers.Interface(LP_ROUTER_ABI);
+
+    const tokenIds = await getTokenIds(wallet);
+    const selectedTokenId = tokenIds[0]; //Pertama
+  //const selectedTokenId = tokenIds[Math.floor(Math.random() * tokenIds.length)]; // Atau random
+  //const selectedTokenId = tokenIds[tokenIds.length - 1]; // Atau terakhir
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+
+    logger.info(`Pool id Increase ${selectedTokenId}`);
+    logger.start(`Starting Increase pool ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
+
+    const increaseCallData = iface.encodeFunctionData("increaseLiquidity", [{
+      tokenId: selectedTokenId,
+      amount0Desired: parsedAmount0,
+      amount1Desired: parsedAmount1,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline,
+    }]);
+
+    const refundCallData = iface.encodeFunctionData("refundETH");
+
+    const tx = await positionManager.multicall(
+      [increaseCallData, refundCallData],
+      {
+        value: parsedAmount0,
+        gasLimit: 600000,
+      }
+    );
+
+    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
+    await tx.wait();
+    logger.succes(`Increase pool berhasil\n`);
+  } catch (err) {
+     logger.fail(`Gagal Increase Liquidity: ${err.reason || err.message || 'unknown error'}\n`);
+  }
+}
+
+export async function colectfee(wallet) {
+  try {
+    logger.start(`Processing Colectfee `);
+    const tokenIds = await getTokenIds(wallet);
+    if (tokenIds.length === 0) {
+      logger.warn(`Wallet tidak punya LP token`);
+      return;
+    }
+
+    const selectedTokenId = tokenIds[Math.floor(Math.random() * tokenIds.length)];
+    logger.info(`Pool yg dicollect ${selectedTokenId}`);
+
+    const manager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
+    const iface = new ethers.Interface(LP_ROUTER_ABI);
+    const maxUint128 = (2n ** 128n - 1n).toString();
+
+    const collectCalldata = iface.encodeFunctionData("collect", [
+      {
+        tokenId: selectedTokenId,
+        recipient: wallet.address,
+        amount0Requested: maxUint128,
+        amount1Requested: maxUint128,
+      },
+    ]);
+
+    const multicalls = [collectCalldata];
+
+    logger.start(`Starting Colectfee `);
+    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
+    await tx.wait();
+    logger.succes(`Colectfee berhasil\n`);
+  } catch (err) {
+    logger.fail(`Gagal Colectfee: ${err.reason || err.message || 'unknown error'}\n`);
+  }
+}
+
+export async function removeLiquidity(wallet) {
+  try {
+    logger.start(`Processing Remove Liquidity `);
+    logger.info(`Mengecek Pool yg Tersedia`);
+    const tokenIds = await getTokenIds(wallet);
+    if (tokenIds.length === 0) {
+      logger.warn(`Wallet tidak punya LP token`);
+      return;
+    }
+
+    const selectedTokenId = tokenIds[tokenIds.length - 1];
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+    logger.info(`Pool yg Tersedia ${tokenIds}`);
+    logger.info(`Pool yg diremove ${selectedTokenId}`);
+
+    const liquidity = await getLiquidity(wallet, selectedTokenId);
+
+    const manager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
+    const iface = new ethers.Interface(LP_ROUTER_ABI);
+    const maxUint128 = (2n ** 128n - 1n).toString();
+
+    const decreaseCalldata = iface.encodeFunctionData("decreaseLiquidity", [
+      {
+        tokenId: selectedTokenId,
+        liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline,
+      },
+    ]);
+
+    const collectCalldata = iface.encodeFunctionData("collect", [
+      {
+        tokenId: selectedTokenId,
+        recipient: wallet.address,
+        amount0Requested: maxUint128,
+        amount1Requested: maxUint128,
+      },
+    ]);
+
+    const multicalls = [decreaseCalldata, collectCalldata];
+
+    logger.start(`Remove Liquidity `);
+    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
+    await tx.wait();
+    logger.succes(`Remove Liquidity berhasil\n`);
+  } catch (err) {
+    logger.fail(`Gagal remove liquidity: ${err.reason || err.message || 'unknown error'}\n`);
+  }
+}
+
