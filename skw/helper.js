@@ -122,6 +122,18 @@ export async function daily(token, headers, wallet) {
   }
 }
 
+export async function balanceETH(wallet) {
+  try {
+    const getBalance = await provider.getBalance(wallet.address);
+    const Balance = ethers.formatUnits(getBalance,18);
+    const formatbalance = parseFloat(Balance).toFixed(3);
+    logger.balance(`Balance Pharos: ${formatbalance}`);
+    return getBalance;
+  } catch (err) {
+    logger.fail(`Error Cek BalanceETH : ${err.message || err}\n`);
+  }
+}
+
 export async function approve(wallet, tokenAddress, spenderAddress, amount) {
   const token = new ethers.Contract(tokenAddress, erc20Abi, wallet);
   const decimals = await token.decimals();
@@ -158,6 +170,32 @@ export async function cekbalance(wallet, tokenIn) {
     return { balancewei, decimal, symbol } ;
   } catch (err) {
     logger.fail(`Error Cek Balance : ${err.message || err}\n`);
+  }
+}
+
+export async function deposit(wallet, tokenIn, amount) {
+  try {
+    const getBalance = await balanceETH(wallet);
+    const balance = parseFloat(ethers.formatUnits(getBalance, 18)).toFixed(5);
+    const { balancewei, decimal } = await cekbalance(wallet, tokenIn);
+    const WPHRSBalance = parseFloat(ethers.formatUnits(balancewei, decimal)).toFixed(5);
+
+    logger.balance(`Balance WPHRS: ${WPHRSBalance}`);
+    const abi = ["function deposit() external payable"];
+    const contract = new ethers.Contract(WPHRS_ZENITH, abi, wallet);
+
+    logger.start(`Swap ${amount} PHRS ke WPHRS `);
+    const tx = await contract.deposit({
+      value: ethers.parseEther(amount),
+      gasLimit: 100_000,
+    });
+
+    logger.send(`Tx dikirim! ->> ${explorer}${tx.hash}`);
+    await tx.wait();
+    logger.succes(`Swap Berhasil\n`);
+
+  } catch (err) {
+    logger.fail(`Error during deposit : ${err.message}\n`);
   }
 }
 
