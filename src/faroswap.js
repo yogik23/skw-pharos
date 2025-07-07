@@ -126,7 +126,7 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
 
     const amountOut = ethers.parseUnits(resAmountFixed, decimalOut);
 
-    const slippage = 0.01;
+    const slippage = 0.40;
     const slippageBps = BigInt(Math.round(slippage * 10000));
     const base = BigInt(10000);
 
