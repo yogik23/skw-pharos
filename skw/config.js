@@ -1,93 +1,98 @@
-import chalk from "chalk";
 import { ethers } from "ethers";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const RPC = "https://testnet.dplabs-internal.com";
-const provider = new ethers.JsonRpcProvider(RPC);
+export const provider = new ethers.JsonRpcProvider(RPC);
 
-const ROUTER = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
-const LP_ROUTER_ADDRESS = "0xf8a1d4ff0f9b9af7ce58e1fc1833688f3bfd6115";
+export const privateKeys = fs.readFileSync(path.join(__dirname, "../privatekey.txt"), "utf-8")
+  .split("\n")
+  .map(k => k.trim())
+  .filter(k => k.length > 0);
 
-const tokens = {
-  USDC: { address: "0xad902cf99c2de2f1ba5ec4d642fd7e49cae9ee37", decimals: 18 },
-  WPHRS: { address: "0x76aaada469d23216be5f7c596fa25f282ff9b364", decimals: 18 },
-  USDT: { address: "0xed59de2d7ad9c043442e381231ee3646fc3c2939", decimals: 18 },
+export function generateAddresses(count) {
+  const wallets = [];
+  for (let i = 0; i < count; i++) {
+    const wallet = ethers.Wallet.createRandom();
+    wallets.push({ address: wallet.address, privateKey: wallet.privateKey });
+  }
+  return wallets;
+}
+
+export const baseHeaders = {
+  accept: "application/json, text/plain, */*",
+  origin: "https://testnet.pharosnetwork.xyz",
+  referer: "https://testnet.pharosnetwork.xyz/",
+  "sec-gpc": "1",
 };
 
-const pairs = [
-  { from: "WPHRS", to: "USDC", amount: "0.0001" },
-  { from: "WPHRS", to: "USDT", amount: "0.0001" },
-  { from: "USDT", to: "WPHRS", amount: "0.03" },
-  { from: "USDT", to: "USDC", amount: "0.03" },
-  { from: "USDC", to: "WPHRS", amount: "0.03" },
-  { from: "USDC", to: "USDT", amount: "0.03" },
-];
-
-const erc20_abi = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function deposit() external payable",
-];
-
-const SWAP_ABI = ["function multicall(uint256, bytes[])"];
-
-const POOL_ABI = [
-  "function token0() view returns (address)",
-  "function token1() view returns (address)",
-  "function fee() view returns (uint24)",
-  "function liquidity() view returns (uint128)",
-  "function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)"
-];
-
-const LP_ROUTER_ABI = [
-  "function mint(tuple(address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint256 amount0Desired, uint256 amount1Desired, uint256 amount0Min, uint256 amount1Min, address recipient, uint256 deadline)) external payable returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)",
-  "function increaseLiquidity(tuple(uint256 tokenId, uint256 amount0Desired, uint256 amount1Desired, uint256 amount0Min, uint256 amount1Min, uint256 deadline)) external payable returns (uint128 liquidity, uint256 amount0, uint256 amount1)",
-  "function decreaseLiquidity(tuple(uint256 tokenId, uint128 liquidity, uint256 amount0Min, uint256 amount1Min, uint256 deadline)) external returns (uint256 amount0, uint256 amount1)",
-  "function collect(tuple(uint256 tokenId, address recipient, uint128 amount0Requested, uint128 amount1Requested)) external returns (uint256 amount0, uint256 amount1)",
-  "function positions(uint256 tokenId) external view returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX96, uint256 feeGrowthInside1LastX96, uint128 tokensOwed0, uint128 tokensOwed1)",
-  "function refundETH()",
-  "function multicall(bytes[] calldata data) payable returns (bytes[] memory results)"
-];
-
-const nftAbi = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
-];
-
-function delay(ms) {
+export function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function Retry(asyncFn, label = "Operation", retries = 10, timeout = 30000) {
-  let attempt = 0;
-  while (attempt < retries) {
-    try {
-      return await asyncFn();
-    } catch (err) {
-      attempt++;
-      const waitTime = timeout * attempt;
+const prefixes = [
+  'Neo', 'Meta', 'Alpha', 'Turbo', 'Proto', 'Quantum', 'Mega', 'Hyper', 'Ultra', 'Cryo',
+  'Astro', 'Cyber', 'Nano', 'Zen', 'Giga', 'Omni', 'Vortex', 'Luna', 'Volt', 'Solar',
+  'Pixel', 'Dark', 'Light', 'Myst', 'Pluto', 'Nova', 'Zero', 'Echo', 'Core', 'Flux',
+  'Iron', 'Steel', 'Ghost', 'Sky', 'Storm', 'Chrono', 'Blade', 'Shadow', 'Crystal', 'Aero',
+  'Pyro', 'Glitch', 'Frost', 'Byte', 'Fire', 'Spark', 'Wisp', 'Draco', 'Dust', 'AstroX',
+  'Bio', 'Orbital', 'Fusion', 'Titan', 'Rogue', 'Lucid', 'Singularity', 'Prism', 'Hydro', 'Ion',
+  'Omega', 'Nebula', 'Krypto', 'Stellar', 'Warp', 'Ignis', 'Magnet', 'Crypt', 'Pulse', 'Flash',
+  'Arc', 'SkyNet', 'Aether', 'LightSpeed', 'Phase', 'QuantumX', 'Blitz', 'Nexus', 'StormX', 'Cyborg',
+  'Onyx', 'Spectra', 'ShadowX', 'Void', 'Plasma', 'Inferno', 'Sonic', 'Mirage', 'Orbit', 'Tachyon',
+  'Zenith', 'Eclipse', 'Radiant', 'Synthetix', 'Halo', 'Beacon', 'Carbon', 'Torque', 'Signal', 'Drift',
+  'NovaX', 'Nebulon', 'Lambda', 'Fractal'
+];
 
-      if (attempt < retries) {
-        await delay(waitTime);
-      } else {
-        console.error(chalk.red(`❌ [${label}] Failed after ${retries} attempts\n`));
-        throw err;
-      }
-    }
-  }
+const suffixes = [
+  'Core', 'X', 'Net', 'Byte', 'Chain', 'Verse', 'Token', 'Fi', 'Labs', 'Edge',
+  'Storm', 'Link', 'Hub', 'Flow', 'OS', 'Pulse', 'Sync', 'Block', 'Dex', 'Vault',
+  'Swap', 'SwapX', 'Boost', 'Launch', 'Beam', 'Pad', 'Dash', 'Rise', 'Spark', 'Jet',
+  'Fuel', 'Stack', 'Craft', 'Zone', 'Forge', 'Mode', 'ByteX', 'Syncer', 'Engine', 'Connect',
+  'Node', 'Shift', 'Sphere', 'Field', 'Port', 'Run', 'System', 'Wave', 'Matrix', 'Element',
+  'Station', 'Beacon', 'Cloud', 'Warp', 'Crate', 'Mint', 'Loop', 'Lock', 'VaultX', 'Base',
+  'Drop', 'Globe', 'Realm', 'Rocket', 'Force', 'Bridge', 'Tower', 'Scanner', 'Gate', 'Bank',
+  'Market', 'Scan', 'Spin', 'Project', 'Coin', 'Bit', 'JetX', 'Track', 'LaunchX', 'FuelX',
+  'LabsX', 'ModeX', 'Protocol', 'LinkX', 'ChainX', 'Cast', 'Dock', 'Rush', 'Line', 'FieldX',
+  'Trade', 'Trust', 'Energy', 'Power', 'Heat', 'NodeX', 'CraftX', 'NetX', 'Signal', 'Vision'
+];
+
+export function randomTokenName() {
+  const pre = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const suf = suffixes[Math.floor(Math.random() * suffixes.length)];
+  return pre + suf;
 }
 
-export {
-  provider,
-  tokens,
-  pairs,
-  ROUTER,
-  LP_ROUTER_ADDRESS,
-  SWAP_ABI,
-  erc20_abi,
-  POOL_ABI,
-  LP_ROUTER_ABI,
-  nftAbi,
-  delay,
-  Retry
+export function randomSymbol(name) {
+  const upper = name.toUpperCase().replace(/[^A-Z]/g, '');
+  let symbol = upper[0];
+  if (upper.length > 2) symbol += upper[Math.floor(upper.length / 2)];
+  if (upper.length > 3) symbol += upper.slice(-1);
+  return symbol.slice(0, 4);
+}
+
+export const randomSupply = () => {
+  const supplyrandom = ['10000000', '100000000', '1000000000', '1000000000', '2000000000', '4000000000', '10000000000'];
+  return supplyrandom[Math.floor(Math.random() * supplyrandom.length)];
 };
+
+export function randomAmount(min, max, decimalPlaces) {
+  return (Math.random() * (max - min) + min).toFixed(decimalPlaces);
+}
+
+export function randomdelay(min = 15000, max = 25000) {
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+export function buildExactInputSingle({ tokenIn, tokenOut, fee, recipient, amountIn, amountOutMinimum, sqrtPriceLimitX96 }) {
+  const selector = "0x04e45aaf";
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    ["address", "address", "uint24", "address", "uint256", "uint256", "uint160"],
+    [tokenIn, tokenOut, fee, recipient, amountIn, amountOutMinimum, sqrtPriceLimitX96]
+  );
+  return selector + encoded.slice(2);
+}
