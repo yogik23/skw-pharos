@@ -166,7 +166,7 @@ export async function cekbalance(wallet, tokenIn) {
     const balancewei = await contract.balanceOf(wallet.address);
     const formatbalance = ethers.formatUnits(balancewei, decimal);
     const fixbalance = parseFloat(formatbalance).toFixed(5);
-    logger.balance(`Balance ${name} : ${fixbalance} ${symbol}`)
+    logger.balance(`Balance ${symbol} : ${fixbalance} `)
     return { balancewei, decimal, symbol } ;
   } catch (err) {
     logger.fail(`Error Cek Balance : ${err.message || err}\n`);
@@ -178,11 +178,9 @@ export async function deposit(wallet, tokenIn, amount) {
     const getBalance = await balanceETH(wallet);
     const balance = parseFloat(ethers.formatUnits(getBalance, 18)).toFixed(5);
     const { balancewei, decimal } = await cekbalance(wallet, tokenIn);
-    const WPHRSBalance = parseFloat(ethers.formatUnits(balancewei, decimal)).toFixed(5);
 
-    logger.balance(`Balance WPHRS: ${WPHRSBalance}`);
     const abi = ["function deposit() external payable"];
-    const contract = new ethers.Contract(WPHRS_ZENITH, abi, wallet);
+    const contract = new ethers.Contract(tokenIn, abi, wallet);
 
     logger.start(`Swap ${amount} PHRS ke WPHRS `);
     const tx = await contract.deposit({
