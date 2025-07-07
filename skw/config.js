@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const RPC = "https://api.zan.top/node/v1/pharos/testnet/54d7693f405e41ff95c9ba9f67d59f40";
+const RPC = "https://testnet.dplabs-internal.com";
 export const provider = new ethers.JsonRpcProvider(RPC);
 
 export const GAS_LIMIT = 700000;
