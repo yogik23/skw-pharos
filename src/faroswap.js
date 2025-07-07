@@ -152,8 +152,8 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
         gasPrice: GAS_PRICE
       }
     );
-
-
+   
+    console.log("tx", tx);
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     await tx.wait();
     logger.succes(`addLiquidity Berhasil\n`);
