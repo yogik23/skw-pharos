@@ -1,0 +1,13 @@
+export const PHRS_address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+export const WPHRS_FAROSWAP = "0x3019b247381c850ab53dc0ee53bce7a07ea9155f";
+export const WPHRS_ZENITH = "0x76aaada469d23216be5f7c596fa25f282ff9b364";
+export const WETH_address = "0x4e28826d32f1c398ded160dc16ac6873357d048f";
+export const WBTC_address = "0x8275c526d1bcec59a31d673929d3ce8d108ff5c7";
+export const USDC_address = "0x72df0bcd7276f2dfbac900d1ce63c272c4bccced";
+export const USDT_address = "0xd4071393f8716661958f766df660033b3d35fd29";
+export const oldUSDC_address = "0xad902cf99c2de2f1ba5ec4d642fd7e49cae9ee37";
+export const oldUSDT_address = "0xed59de2d7ad9c043442e381231ee3646fc3c2939";
+export const ZENITH_ROUTER = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
+export const ZENITH_ADDRESS = "0xf8a1d4ff0f9b9af7ce58e1fc1833688f3bfd6115";
+export const FAROSWAP_ADDRESS = "0xf05af5e9dc3b1dd3ad0c087bd80d7391283775e0";
+export const explorer = "https://testnet.pharosscan.xyz/tx/";
