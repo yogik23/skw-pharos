@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const RPC = "https://testnet.dplabs-internal.com";
+const RPC = "https://api.zan.top/node/v1/pharos/testnet/54d7693f405e41ff95c9ba9f67d59f40";
 export const provider = new ethers.JsonRpcProvider(RPC);
 
 export const privateKeys = fs.readFileSync(path.join(__dirname, "../privatekey.txt"), "utf-8")
