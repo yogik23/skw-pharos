@@ -64,7 +64,7 @@ export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
 
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     await tx.wait();
-    logger.succes(`Swap Berhasil`);
+    logger.succes(`Swap Berhasil\n`);
   } catch (err) {
     logger.fail(`swapViaMixSwap error ${err.message || err}`);
   }
@@ -96,7 +96,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
 
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     await tx.wait();
-    logger.succes(`Swap Berhasil`);
+    logger.succes(`Swap Berhasil\n`);
   } catch (err) {
     logger.fail(`swapViaMixSwap error ${err.message || err}`);
   }
@@ -115,7 +115,7 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
 
     const route = await getrouter(tokenOut, tokenIn, amountIn, wallet.address);
     const resAmount = parseFloat(route.resAmount);
-    const resAmountFixed = resAmount.toFixed(6); // hasil string: "0.056864"
+    const resAmountFixed = resAmount.toFixed(6);
 
     const amountOut = ethers.parseUnits(resAmountFixed, decimalOut);
 
