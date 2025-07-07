@@ -133,8 +133,8 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
     const amountInMin = amountIn * (base - slippageBps) / base;
     const amountOutMin = amountOut * (base - slippageBps) / base;
 
-    await approve(wallet, tokenIn, FAROSWAP_ADDRESS, amountIn);
-    await approve(wallet, tokenOut, FAROSWAP_ADDRESS, amountOut);
+    await approve(wallet, tokenIn, FAROSWAP_ADDRESS, ethers.MaxUint256);
+    await approve(wallet, tokenOut, FAROSWAP_ADDRESS, ethers.MaxUint256);
     logger.start(`Starting Add Liquidity ${amount} ${symbolIn} to ${resAmount} ${symbolOut}`);
 
     const tx = await contract.addLiquidity(
