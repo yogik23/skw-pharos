@@ -10,6 +10,8 @@ import {
  provider,
  delay,
  buildExactInputSingle,
+ GAS_LIMIT,
+ GAS_PRICE,
 } from "../skw/config.js";
 
 import {
@@ -81,7 +83,8 @@ export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) 
   const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
   const poolInfo = await getPoolInfo(poolAddress, token0, token1);
 
-  const amount1Desired = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
+  const amount1Desired1 = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
+  const amount1Desired = amount1Desired1.toFixed(6);
 
   const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
   const parsedAmount1 = ethers.parseUnits(amount1Desired, decimals1);
@@ -118,6 +121,10 @@ export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) 
       amount1Min: 0,
       recipient: wallet.address,
       deadline,
+      {
+        gasLimit: GAS_LIMIT,
+        gasPrice: GAS_PRICE
+      }
     };
 
     const gasLimit = 700000;
@@ -192,7 +199,8 @@ export async function increaseLiquidity(wallet, token0, token1, amount0Desired, 
       [increaseCallData, refundCallData],
       {
         value: parsedAmount0,
-        gasLimit: 600000,
+        gasLimit: GAS_LIMIT,
+        gasPrice: GAS_PRICE,
       }
     );
 
@@ -232,7 +240,13 @@ export async function colectfee(wallet) {
     const multicalls = [collectCalldata];
 
     logger.start(`Starting Colectfee `);
-    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    const tx = await manager.multicall(
+      multicalls,
+      {
+        gasLimit: GAS_LIMIT,
+        gasPrice: GAS_PRICE
+      }
+    );
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     await tx.wait();
     logger.succes(`Colectfee berhasil\n`);
@@ -284,7 +298,13 @@ export async function removeLiquidity(wallet) {
     const multicalls = [decreaseCalldata, collectCalldata];
 
     logger.start(`Remove Liquidity `);
-    const tx = await manager.multicall(multicalls, { gasLimit: 600000 });
+    const tx = await manager.multicall(
+      multicalls,
+      {
+        gasLimit: GAS_LIMIT,
+        gasPrice: GAS_PRICE
+      }
+    );
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     await tx.wait();
     logger.succes(`Remove Liquidity berhasil\n`);
@@ -292,4 +312,3 @@ export async function removeLiquidity(wallet) {
     logger.fail(`Gagal remove liquidity: ${err.reason || err.message || 'unknown error'}\n`);
   }
 }
-
