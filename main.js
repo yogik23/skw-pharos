@@ -37,7 +37,6 @@ import {
 } from "./skw/helper.js";
 
 import {
- deposit,
  swap,
  addLiquidity,
  increaseLiquidity,
