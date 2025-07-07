@@ -70,7 +70,7 @@ export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
     await tx.wait();
     logger.succes(`Swap Berhasil\n`);
   } catch (err) {
-    logger.fail(`swapViaMixSwap error ${err.message || err}`);
+    logger.fail(`swapFaroswap error ${err.message || err}`);
   }
 }
 
@@ -105,7 +105,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
     await tx.wait();
     logger.succes(`Swap Berhasil\n`);
   } catch (err) {
-    logger.fail(`swapViaMixSwap error ${err.message || err}`);
+    logger.fail(`swapERC20Faroswap error ${err.message || err}`);
   }
 }
 
