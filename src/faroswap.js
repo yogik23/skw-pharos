@@ -9,6 +9,8 @@ import {
 import {
  provider,
  delay,
+ GAS_LIMIT,
+ GAS_PRICE,
 } from "../skw/config.js";
 
 import {
@@ -60,6 +62,8 @@ export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
       to: route.to,
       data: route.data,
       value: route.value,
+      gasLimit: GAS_LIMIT,
+      gasPrice: GAS_PRICE
     });
 
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
@@ -92,6 +96,8 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
     const tx = await wallet.sendTransaction({
       to: routecontract,
       data: inpudata,
+      gasLimit: GAS_LIMIT,
+      gasPrice: GAS_PRICE
     });
 
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
@@ -130,7 +136,6 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
     await approve(wallet, tokenOut, FAROSWAP_ADDRESS, amountOut);
     logger.start(`Starting Add Liquidity ${amount} ${symbolIn} to ${resAmount} ${symbolOut}`);
 
-    const gasLimit = 700000;
     const tx = await contract.addLiquidity(
       tokenIn,
       tokenOut,
@@ -141,7 +146,10 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
       amountOutMin,
       wallet.address,
       deadline,
-      { gasLimit }
+      {
+        gasLimit: GAS_LIMIT,
+        gasPrice: GAS_PRICE
+      }
     );
 
 
