@@ -121,14 +121,16 @@ export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) 
       amount1Min: 0,
       recipient: wallet.address,
       deadline,
+    };
+
+    const gasLimit = 700000;
+    const tx = await positionManager.mint(
+      params,
       {
         gasLimit: GAS_LIMIT,
         gasPrice: GAS_PRICE
       }
-    };
-
-    const gasLimit = 700000;
-    const tx = await positionManager.mint(params, { gasLimit });
+    );
     logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
 
     const receipt = await tx.wait();
