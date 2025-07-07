@@ -142,7 +142,7 @@ async function startBot() {
     logger.account(`Wallet: ${wallet.address}`);
 
     try {
-      await dailySendCoin(wallet);      
+      //await dailySendCoin(wallet);      
       await swapzenith(wallet);
       await LPzenith(wallet);
       await swapLPfaro(wallet);
