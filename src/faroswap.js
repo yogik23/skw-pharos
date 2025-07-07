@@ -41,19 +41,19 @@ export async function getrouter(toToken, fromToken, amountIn, userAddr) {
 
 export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
   try {
-    const { balancewei: balanceweiIn, symbol: symbolIn, decimal: decimalIn } = await cekbalance(wallet, WPHRS_address);
-    const { symbol: symbolOut, decimal: decimalOut } = await cekbalance(wallet, tokenOut);
-    const amountIn = ethers.parseUnits(amount, decimalIn);
+    const getBalance = await balanceETH(wallet);
+    const { symbol } = await cekbalance(wallet, tokenOut);
+    const amountIn = ethers.parseUnits(amount, 18);
 
-    if (balanceweiIn < amountIn) {
-      logger.warn(`Saldo ${symbolIn} tidak cukup untuk swap < ${amount}`);
+    if (getBalance < amountIn) {
+      logger.warn(`Saldo PHRS tidak cukup untuk swap < ${amount}`);
       return;
     }
 
     const route = await getrouter(tokenOut, tokenIn, amountIn, wallet.address);
 
     const resAmount = parseFloat(route.resAmount);
-    logger.start(`Starting swap ${amount} ${symbolIn} to ${resAmount.toFixed(8)} ${symbolOut}`);
+    logger.start(`Starting swap ${amount} PHRS to ${resAmount.toFixed(8)} ${symbol}`);
 
     const tx = await wallet.sendTransaction({
       to: route.to,
@@ -114,7 +114,7 @@ export export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amo
 
     const route = await getrouter(tokenOut, tokenIn, amountIn, wallet.address);
     const resAmount = parseFloat(route.resAmount);
-    const resAmountFixed = resAmount.toFixed(6);
+    const resAmountFixed = resAmount.toFixed(6); // hasil string: "0.056864"
 
     const amountOut = ethers.parseUnits(resAmountFixed, decimalOut);
 
@@ -129,6 +129,7 @@ export export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amo
     await approve(wallet, tokenOut, FAROSWAP_ADDRESS, amountOut);
 
     const gasLimit = 700000;
+
 
     const tx = await contract.addLiquidity(
       tokenIn,
