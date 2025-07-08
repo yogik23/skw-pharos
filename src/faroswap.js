@@ -122,7 +122,7 @@ export async function addLiquidityFaroswap(wallet, tokenIn, tokenOut, amount) {
 
     const route = await getrouter(tokenOut, tokenIn, amountIn, wallet.address);
     const resAmount = parseFloat(route.resAmount);
-    const resAmountFixed = resAmount.toFixed(6);
+    const resAmountFixed = resAmount.toFixed(4);
 
     const amountOut = ethers.parseUnits(resAmountFixed, decimalOut);
 
