@@ -112,11 +112,11 @@ async function LPzenith(wallet) {
 }
 
 async function swapLPfaro(wallet) {
-  await deposit(wallet, WPHRS_FAROSWAP, "0.1");
-  await delay(randomdelay());
+  //await deposit(wallet, WPHRS_FAROSWAP, "0.1");
+  //await delay(randomdelay());
 
-  await swapFaroswap(wallet, PHRS_address, USDT_address, "0.001");
-  await delay(randomdelay());
+  //await swapFaroswap(wallet, PHRS_address, USDT_address, "0.001");
+  //await delay(randomdelay());
 
   const amountWPHRStoUSDC = randomAmount(0.001, 0.007, 3);
   await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountWPHRStoUSDC);
