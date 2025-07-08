@@ -33,6 +33,9 @@ export async function getrouter(toToken, fromToken, amountIn, userAddr) {
       const res = await axios.get(ROUTE_API, { timeout: 10000 });
       await delay(3000);
       const route = res.data?.data;
+      if (!route || !route.to || !route.data || !route.resAmount) {
+        throw new Error("Route API dari Dodo tidak lengkap");
+      }
       return route;
     } catch (err) {
       logger.warn(`Percobaan ${attempt} gagal: ${err.message}`);
