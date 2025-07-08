@@ -142,15 +142,15 @@ async function startBot() {
     logger.account(`Wallet: ${wallet.address}`);
 
     try {
-      //await dailySendCoin(wallet);      
-      //await swapzenith(wallet);
+      await dailySendCoin(wallet);      
+      await swapzenith(wallet);
       await LPzenith(wallet);
-      //await swapLPfaro(wallet);
+      await swapLPfaro(wallet);
 
-      //const result = await deployToken(wallet);
-      //if (result) {
-       // await sendDeployToken(result.tokencontract, wallet, result.symbol);
-      //}
+      const result = await deployToken(wallet);
+      if (result) {
+        await sendDeployToken(result.tokencontract, wallet, result.symbol);
+      }
       await delay(randomdelay());
 
     } catch (err) {
