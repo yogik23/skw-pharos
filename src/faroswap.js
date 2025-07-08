@@ -94,7 +94,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
     const inpudata = route.data;
     const resAmount = parseFloat(route.resAmount);
 
-    await approve(wallet, tokenIn, routecontract, amountIn);
+    await approve(wallet, tokenIn, routecontract, ethers.MaxUint256);
     logger.start(`Starting swap ${amount} ${symbolIn} to ${resAmount.toFixed(8)} ${symbolOut}`);
 
     const tx = await wallet.sendTransaction({
