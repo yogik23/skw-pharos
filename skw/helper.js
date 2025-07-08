@@ -222,8 +222,20 @@ export async function getPoolInfo(poolAddress, tokenA, tokenB) {
     throw new Error("Pool tidak mengandung tokenA dan tokenB yang diminta");
   }
 
-  const sqrtPriceX96 = slot0.sqrtPriceX96;
+  const address0 = new ethers.Contract(token0, erc20Abi, provider)
+  const decimal0 = await address0.decimals();
+  const address1 = new ethers.Contract(token1, erc20Abi, provider)
+  const decimal1 = await address1.decimals();
+
   const tickCurrent = slot0.tick;
+
+  const sqrtPriceX96 = slot0.sqrtPriceX96
+  const price = (Number(sqrtPriceX96) ** 2) / (2 ** 192)
+  const adjustedPrice = price * (10 ** (Number(decimal0) - Number(decimal1)))
+
+  const tokenAToTokenB = tokenA.toLowerCase() === token0.toLowerCase() ? adjustedPrice : 1/adjustedPrice
+  const tokenBToTokenA = 1 / tokenAToTokenB
+
 
   return {
     token0,
@@ -232,6 +244,8 @@ export async function getPoolInfo(poolAddress, tokenA, tokenB) {
     liquidity,
     sqrtPriceX96,
     tickCurrent,
+    tokenAToTokenB,
+    tokenBToTokenA,
   };
 }
 
@@ -261,16 +275,6 @@ export async function getTokenIds(wallet) {
   return tokenIds;
 }
 
-export function getAmount1FromAmount0(amount0Str, sqrtPriceX96, decimals0, decimals1) {
-  const Q96 = BigInt(2) ** BigInt(96);
-  const sqrtPrice = BigInt(sqrtPriceX96.toString());
-  const priceX192 = sqrtPrice * sqrtPrice;
-  const amount0 = ethers.parseUnits(amount0Str, decimals0);
-  const parsedAmount1 = amount0 * priceX192 / (Q96 * Q96);
-  const amount1Desired = ethers.formatUnits(parsedAmount1, decimals1);
-  return { parsedAmount1, amount1Desired };
-}
-
 export async function getLiquidity(wallet, tokenIds) {
   try {
     const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
@@ -281,4 +285,3 @@ export async function getLiquidity(wallet, tokenIds) {
     return null;
   }
 }
-
