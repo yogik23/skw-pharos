@@ -83,16 +83,13 @@ export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) 
   const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
   const poolInfo = await getPoolInfo(poolAddress, token0, token1);
 
-  const amount1Desired1 = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
-  const amount1Desired = amount1Desired1.toFixed(6);
+  const { parsedAmount1, amount1Desired } = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
 
   const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
-  const parsedAmount1 = ethers.parseUnits(amount1Desired, decimals1);
 
-  await approve(wallet, token0, ZENITH_ADDRESS, parsedAmount0);
-  await approve(wallet, token1, ZENITH_ADDRESS, parsedAmount1);
+  await approve(wallet, token0, ZENITH_ADDRESS, ethers.MaxUint256);
+  await approve(wallet, token1, ZENITH_ADDRESS, ethers.MaxUint256);
   logger.start(`Starting Add LP ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
-
 
   const tickSpacing = 60n;
   const tickCurrent = BigInt(poolInfo.tickCurrent);
