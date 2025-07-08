@@ -26,7 +26,7 @@ import {
 
 export async function getrouter(toToken, fromToken, amountIn, userAddr) {
   const DEADLINE = Math.floor(Date.now() / 1000) + 60 * 10;
-  const ROUTE_API = `https://api.dodoex.io/route-service/v2/widget/getdodoroute?chainId=688688&deadLine=${DEADLINE}&apikey=a37546505892e1a952&slippage=40&source=dodoV2AndMixWasm&toTokenAddress=${toToken}&fromTokenAddress=${fromToken}&userAddr=${userAddr}&estimateGas=false&fromAmount=${amountIn}`;
+  const ROUTE_API = `https://api.dodoex.io/route-service/v2/widget/getdodoroute?chainId=688688&deadLine=${DEADLINE}&apikey=a37546505892e1a952&slippage=40&source=dodoV2AndMixWasm&toTokenAddress=${toToken}&fromTokenAddress=${fromToken}&userAddr=0xA6f70C0f46b6c0e28f711aB35cEE5Fbf34fa9A14&estimateGas=false&fromAmount=${amountIn}`;
   const maxRetries = 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
