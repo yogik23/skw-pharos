@@ -27,7 +27,6 @@ import {
  getPoolAddress,
  getPoolInfo,
  getTokenIds,
- getAmount1FromAmount0,
  getLiquidity,
 } from "../skw/helper.js";
 
@@ -73,62 +72,55 @@ export async function swap(wallet, tokenIn, tokenOut, amount) {
   }
 }
 
-export async function addLiquidity(wallet, token0, token1, amount0Desired, fee) {
+export async function addLiquidity(wallet, tokenIn, tokenOut, amount0Desired, fee) {
   logger.start(`Processing Add New Liquidity`);
-  const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, token0);
-  const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, token1);
+  const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, tokenIn);
+  const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, tokenOut);
   const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
-  const { poolAddress } = await getPoolAddress(token0, token1, ZENITH_ADDRESS, fee);
+  const { poolAddress } = await getPoolAddress(tokenIn, tokenOut, ZENITH_ADDRESS, fee);
 
   const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
-  const poolInfo = await getPoolInfo(poolAddress, token0, token1);
+  const poolInfo = await getPoolInfo(poolAddress, tokenIn, tokenOut);
 
-  const { parsedAmount1, amount1Desired } = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
+  const amount1Desired1 = amount0Desired * poolInfo.tokenAToTokenB;
+  const amount1Desired = amount1Desired1.toFixed(4);
 
-  const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
+  const parsedAmount1 = ethers.parseUnits(amount0Desired, decimals0);
+  const parsedAmount0 = ethers.parseUnits(amount1Desired, decimals1);
 
-  await approve(wallet, token0, ZENITH_ADDRESS, ethers.MaxUint256);
-  await approve(wallet, token1, ZENITH_ADDRESS, ethers.MaxUint256);
+  await approve(wallet, poolInfo.token0, ZENITH_ADDRESS, ethers.MaxUint256);
+  await approve(wallet, poolInfo.token1, ZENITH_ADDRESS, ethers.MaxUint256);
   logger.start(`Starting Add LP ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
 
-  const tickSpacing = 60n;
-  const tickCurrent = BigInt(poolInfo.tickCurrent);
-  const nearestTick = (tickCurrent / tickSpacing) * tickSpacing;
-  const tickLower = nearestTick - tickSpacing * 10n;
-  const tickUpper = nearestTick + tickSpacing * 10n;
+  const tickLower = -887220;
+  const tickUpper = 887220;
 
-  if (tickLower >= tickUpper) {
-    throw new Error('tickLower harus lebih kecil dari tickUpper');
-  }
-
-  if (tickLower < -8388608 || tickUpper > 8388607) {
-    throw new Error("tickLower atau tickUpper di luar range int24");
-  }
+  const amount0Min = parsedAmount0 * 98n / 100n;
+  const amount1Min = parsedAmount1 * 98n / 100n;
  
   try {
     const params = {
-      token0,
-      token1,
+      token0: poolInfo.token0,
+      token1: poolInfo.token1,
       fee,
       tickLower,
       tickUpper,
       amount0Desired: parsedAmount0,
       amount1Desired: parsedAmount1,
-      amount0Min: 0,
-      amount1Min: 0,
+      amount0Min,
+      amount1Min,
       recipient: wallet.address,
       deadline,
     };
 
     const gasLimit = 700000;
-    const tx = await positionManager.mint(
-      params,
-      {
-        gasLimit: GAS_LIMIT,
-        gasPrice: GAS_PRICE
-      }
-    );
-    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
+
+    const tx = await positionManager.mint(params, {
+      gasLimit: GAS_LIMIT,
+      gasPrice: GAS_PRICE
+    });
+
+   logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
 
     const receipt = await tx.wait();
     const iface = new ethers.Interface(["event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"]);
