@@ -261,12 +261,14 @@ export async function getTokenIds(wallet) {
   return tokenIds;
 }
 
-export function getAmount1FromAmount0(amount0Str, sqrtPriceX96, decimals0) {
-  const sqrtPrice = Number(sqrtPriceX96.toString());
-  const price = (sqrtPrice / 2 ** 96) ** 2; 
-  const amount0 = Number(ethers.parseUnits(amount0Str, decimals0));
-  const parsedAmount1 = amount0 * price;
-  return parsedAmount1;
+export function getAmount1FromAmount0(amount0Str, sqrtPriceX96, decimals0, decimals1) {
+  const Q96 = BigInt(2) ** BigInt(96);
+  const sqrtPrice = BigInt(sqrtPriceX96.toString());
+  const priceX192 = sqrtPrice * sqrtPrice;
+  const amount0 = ethers.parseUnits(amount0Str, decimals0);
+  const parsedAmount1 = amount0 * priceX192 / (Q96 * Q96);
+  const amount1Desired = ethers.formatUnits(parsedAmount1, decimals1);
+  return { parsedAmount1, amount1Desired };
 }
 
 export async function getLiquidity(wallet, tokenIds) {
