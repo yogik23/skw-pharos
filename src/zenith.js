@@ -72,32 +72,40 @@ export async function swap(wallet, tokenIn, tokenOut, amount) {
   }
 }
 
-export async function addLiquidity(wallet, tokenIn, tokenOut, amount0Desired, fee) {
+export async function addLiquidity(wallet, tokenIn, tokenOut, amountInDesired, fee) {
   logger.start(`Processing Add New Liquidity`);
-  const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, tokenIn);
-  const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, tokenOut);
+  const { symbol: symbolIn, decimal: decimalIn } = await cekbalance(wallet, tokenIn);
+  const { symbol: symbolOut, decimal: decimalOut } = await cekbalance(wallet, tokenOut);
   const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
-  const { poolAddress } = await getPoolAddress(tokenIn, tokenOut, ZENITH_ADDRESS, fee);
 
+  const { poolAddress } = await getPoolAddress(tokenIn, tokenOut, ZENITH_ADDRESS, fee);
   const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
   const poolInfo = await getPoolInfo(poolAddress, tokenIn, tokenOut);
 
-  const amount1Desired1 = amount0Desired * poolInfo.tokenAToTokenB;
-  const amount1Desired = amount1Desired1.toFixed(4);
+  const amountOut = amountInDesired * poolInfo.tokenAToTokenB;
+  const amountOutFormatted = amountOut.toFixed(6);
 
-  const parsedAmount1 = ethers.parseUnits(amount0Desired, decimals0);
-  const parsedAmount0 = ethers.parseUnits(amount1Desired, decimals1);
+  let amount0Desired, amount1Desired;
+  let amount0Min, amount1Min;
+
+  if (tokenIn.toLowerCase() === poolInfo.token0.toLowerCase()) {
+    amount0Desired = ethers.parseUnits(amountInDesired.toString(), decimalIn);
+    amount1Desired = ethers.parseUnits(amountOutFormatted, decimalOut);
+  } else {
+    amount0Desired = ethers.parseUnits(amountOutFormatted, decimalOut);
+    amount1Desired = ethers.parseUnits(amountInDesired.toString(), decimalIn);
+  }
+
+  amount0Min = amount0Desired * 98n / 100n;
+  amount1Min = amount1Desired * 98n / 100n;
 
   await approve(wallet, poolInfo.token0, ZENITH_ADDRESS, ethers.MaxUint256);
   await approve(wallet, poolInfo.token1, ZENITH_ADDRESS, ethers.MaxUint256);
-  logger.start(`Starting Add LP ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
+  logger.start(`Starting Add LP ${amountInDesired} ${symbolIn} + ${amountOutFormatted} ${symbolOut}`);
 
   const tickLower = -887220;
   const tickUpper = 887220;
 
-  const amount0Min = parsedAmount0 * 98n / 100n;
-  const amount1Min = parsedAmount1 * 98n / 100n;
- 
   try {
     const params = {
       token0: poolInfo.token0,
@@ -105,24 +113,22 @@ export async function addLiquidity(wallet, tokenIn, tokenOut, amount0Desired, fe
       fee,
       tickLower,
       tickUpper,
-      amount0Desired: parsedAmount0,
-      amount1Desired: parsedAmount1,
+      amount0Desired,
+      amount1Desired,
       amount0Min,
       amount1Min,
       recipient: wallet.address,
       deadline,
     };
 
-    const gasLimit = 700000;
-
     const tx = await positionManager.mint(params, {
       gasLimit: GAS_LIMIT,
       gasPrice: GAS_PRICE
     });
 
-   logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
-
+    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
     const receipt = await tx.wait();
+
     const iface = new ethers.Interface(["event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"]);
     let tokenId = null;
     for (const log of receipt.logs) {
@@ -132,14 +138,12 @@ export async function addLiquidity(wallet, tokenIn, tokenOut, amount0Desired, fe
           tokenId = parsed.args.tokenId;
           break;
         }
-      } catch (e) {
-        continue;
-      }
+      } catch {}
     }
 
     if (tokenId) {
       logger.succes(`Add New Liquidity berhasil`);
-      logger.info(`Posisi New Liquidity id : ${tokenId}\n`);
+      logger.info(`Posisi New Liquidity ID: ${tokenId}\n`);
     } else {
       logger.warn(`TokenId tidak ditemukan dari event Transfer\n`);
     }
