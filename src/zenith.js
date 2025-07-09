@@ -148,61 +148,6 @@ export async function addLiquidity(wallet, tokenIn, tokenOut, amount0Desired, fe
   }
 }
 
-export async function increaseLiquidity(wallet, token0, token1, amount0Desired, fee) {
-  try {
-    logger.start(`Processing Increase Liquidity`);
-    const { symbol: symbol0, decimal: decimals0 } = await cekbalance(wallet, token0);
-    const { symbol: symbol1, decimal: decimals1 } = await cekbalance(wallet, token1);
-    const { poolAddress } = await getPoolAddress(token0, token1, ZENITH_ADDRESS, fee);
-
-    const positionManager = new ethers.Contract(ZENITH_ADDRESS, LP_ROUTER_ABI, wallet);
-    const poolInfo = await getPoolInfo(poolAddress, token0, token1);
-
-    const amount1Desired1 = getAmount1FromAmount0(amount0Desired, poolInfo.sqrtPriceX96, decimals0, decimals1);
-    const amount1Desired = parseFloat(amount1Desired1).toFixed(6);
-
-    const parsedAmount0 = ethers.parseUnits(amount0Desired, decimals0);
-    const parsedAmount1 = ethers.parseUnits(amount1Desired, decimals1);
-
-    const iface = new ethers.Interface(LP_ROUTER_ABI);
-
-    const tokenIds = await getTokenIds(wallet);
-    const selectedTokenId = tokenIds[0]; //Pertama
-  //const selectedTokenId = tokenIds[Math.floor(Math.random() * tokenIds.length)]; // Atau random
-  //const selectedTokenId = tokenIds[tokenIds.length - 1]; // Atau terakhir
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
-
-    logger.info(`Pool id Increase ${selectedTokenId}`);
-    logger.start(`Starting Increase pool ${amount0Desired} ${symbol0} dan ${amount1Desired} ${symbol1}`);
-
-    const increaseCallData = iface.encodeFunctionData("increaseLiquidity", [{
-      tokenId: selectedTokenId,
-      amount0Desired: parsedAmount0,
-      amount1Desired: parsedAmount1,
-      amount0Min: 0,
-      amount1Min: 0,
-      deadline,
-    }]);
-
-    const refundCallData = iface.encodeFunctionData("refundETH");
-
-    const tx = await positionManager.multicall(
-      [increaseCallData, refundCallData],
-      {
-        value: parsedAmount0,
-        gasLimit: GAS_LIMIT,
-        gasPrice: GAS_PRICE,
-      }
-    );
-
-    logger.send(`Tx dikirim ->> ${explorer}${tx.hash}`);
-    await tx.wait();
-    logger.succes(`Increase pool berhasil\n`);
-  } catch (err) {
-     logger.fail(`Gagal Increase Liquidity: ${err.reason || err.message || 'unknown error'}\n`);
-  }
-}
-
 export async function colectfee(wallet) {
   try {
     logger.start(`Processing Colectfee `);
