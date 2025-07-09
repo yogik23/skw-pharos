@@ -71,9 +71,20 @@ export async function login(wallet, headers) {
 
 export async function verifyTask(token, headers, wallet, txHash) {
   try {
-    const url = `https://api.pharosnetwork.xyz/task/verify?address=${wallet.address}&task_id=103&tx_hash=${txHash}`;
-    const authHeaders = { ...headers, Authorization: `Bearer ${token}` };
-    const response = await axios.post(url, null, { headers: authHeaders });
+    const url = `https://api.pharosnetwork.xyz/task/verify`;
+    const authHeaders = {
+      ...headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const body = {
+      address: wallet.address,
+      task_id: 103,
+      tx_hash: txHash,
+    };
+
+    const response = await axios.post(url, body, { headers: authHeaders });
     return response.data?.msg;
   } catch (error) {
     logger.fail("Verify error: " + (error.response?.data || error.message));
