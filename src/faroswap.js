@@ -27,13 +27,13 @@ import {
 export async function getrouter(toToken, fromToken, amountIn, userAddr) {
   const DEADLINE = Math.floor(Date.now() / 1000) + 60 * 10;
   const ROUTE_API = `https://api.dodoex.io/route-service/v2/widget/getdodoroute?chainId=688688&deadLine=${DEADLINE}&apikey=a37546505892e1a952&slippage=3.225&source=dodoV2AndMixWasm&toTokenAddress=${toToken}&fromTokenAddress=${fromToken}&userAddr=${userAddr}&estimateGas=true&fromAmount=${amountIn}`;
-  const maxRetries = 3;
+  const maxRetries = 7;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const res = await axios.get(ROUTE_API, { timeout: 10000 });
       const route = res.data?.data;
       if (!route || !route.to || !route.data || !route.resAmount) {
-        throw new Error("Route API dari Dodo tidak lengkap");
+        throw new Error("Route API dari Dodo tidak merespon");
       }
       return route;
     } catch (err) {
@@ -46,6 +46,7 @@ export async function getrouter(toToken, fromToken, amountIn, userAddr) {
 
 export async function swapFaroswap(wallet, tokenIn, tokenOut, amount) {
   try {
+    logger.start(`Processing Swap in Faroswap`);
     const getBalance = await balanceETH(wallet);
     const { symbol } = await cekbalance(wallet, tokenOut);
     const amountIn = ethers.parseUnits(amount, 18);
@@ -84,7 +85,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
     const amountIn = ethers.parseUnits(amount, decimalIn);
 
     if (balanceweiIn < amountIn) {
-      logger.warn(`Saldo ${symbolIn} tidak cukup untuk swap < ${amount}`);
+      logger.warn(`Saldo ${symbolIn} tidak cukup untuk swap < ${amount}\n`);
       return;
     }
 
@@ -107,7 +108,7 @@ export async function swapERC20Faroswap(wallet, tokenIn, tokenOut, amount) {
     await tx.wait();
     logger.succes(`Swap Berhasil\n`);
   } catch (err) {
-    logger.fail(`swapERC20Faroswap error ${err.message || err}`);
+    logger.fail(`swapERC20Faroswap error ${err.message || err}\n`);
   }
 }
 
