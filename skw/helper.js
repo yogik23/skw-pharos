@@ -1,5 +1,7 @@
 import { ethers } from "ethers";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 import { logger } from "./logger.js";
 import {
  ZENITH_ADDRESS,
@@ -54,82 +56,6 @@ export async function sendcoin(wallet, toAddress) {
 
   } catch (err) {
     logger.fail(`Error during sendcoin ${err.message}\n`);
-  }
-}
-
-export async function login(wallet, headers) {
-  try {
-    const signature = await wallet.signMessage("pharos");
-    const url = `https://api.pharosnetwork.xyz/user/login?address=${wallet.address}&signature=${signature}&invite_code=09IYaHsUJYpxmTSW`;
-    const response = await axios.post(url, {}, { headers });
-    return response.data?.data?.jwt;
-  } catch (error) {
-    logger.fail("Login error: " + (error.response?.data || error.message));
-    throw error;
-  }
-}
-
-export async function verifyTask(token, headers, wallet, txHash) {
-  try {
-    const url = `https://api.pharosnetwork.xyz/task/verify`;
-    const authHeaders = {
-      ...headers,
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-
-    const body = {
-      address: wallet.address,
-      task_id: 103,
-      tx_hash: txHash,
-    };
-
-    const response = await axios.post(url, body, { headers: authHeaders });
-    return response.data?.msg;
-  } catch (error) {
-    logger.fail("Verify error: " + (error.response?.data || error.message));
-    throw error;
-  }
-}
-
-export async function verifySendCoin(token, headers, wallet) {
-  try {
-    const recipients = generateAddresses(15).map((w) => w.address);
-    logger.start("Processing Send Coin to 15 random address");
-
-    for (const recipient of recipients) {
-      const txHash = await sendcoin(wallet, recipient);
-      if (txHash) {
-        const res = await verifyTask(token, headers, wallet, txHash);
-        logger.info(`Sendcoin ${res}\n`);
-      } else {
-        logger.warn("Skip verify karena txHash undefined");
-      }
-    }
-  } catch (err) {
-    logger.fail("VerifySendCoin error: " + err.message);
-  }
-}
-
-export async function daily(token, headers, wallet) {
-  try {
-    const url = `https://api.pharosnetwork.xyz/sign/in?address=${wallet.address}`;
-    const authHeaders = { ...headers, Authorization: `Bearer ${token}` };
-    const response = await axios.post(url, null, { headers: authHeaders });
-    const msg = response.data?.msg;
-
-    if (msg === "ok") {
-      logger.succes(`Daily Login Berhasil\n`);
-    } else if (msg === "already signed in today") {
-      logger.info(`Sudah Login Hari Ini\n`);
-    } else {
-      logger.warn(`Respon tidak dikenali: ${msg}\n`);
-    }
-
-    return msg;
-  } catch (error) {
-    logger.fail('Error saat daily sign-in:', error.response?.data || error.message);
-    throw error;
   }
 }
 
@@ -294,5 +220,40 @@ export async function getLiquidity(wallet, tokenIds) {
   } catch (err) {
     logger.fail(`Error getLiquidity : ${err.message || err}\n`);
     return null;
+  }
+}
+
+export async function sendTG(address, txCount, totalPoint) {
+  if (process.env.SEND_TO_TG !== "true") {
+    logger.info("Pengirim pesan Telegram dinonaktifkan");
+    return;
+  }
+
+  const retries = 5;
+  const date = new Date().toISOString().split("T")[0];
+  const escape = (text) => text.toString().replace(/([_*[\]()~`>#+-=|{}.!])/g, "\\$1");
+
+  const message = `🌐 *Pharos Testnet*\n📅 *${escape(date)}*\n👛 *${escape(address)}*\n🔣 *Total TX: ${escape(txCount)}*\n🎰 *Total Point: ${escape(totalPoint)}*`;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`,
+        {
+          chat_id: process.env.CHAT_ID,
+          text: message,
+          parse_mode: "MarkdownV2",
+        }
+      );
+      logger.succes(`Message sent to Telegram successfully!\n`);
+      return response.data;
+    } catch (error) {
+      logger.fail(`Error sendTG : ${error.message || error}\n`);
+      if (attempt < retries) {
+        await delay(3000); 
+      } else {
+        return null;
+      }
+    }
   }
 }
