@@ -39,7 +39,7 @@ import {
  getProfil,
  daily,
  verifySendCoin,
-} from "./src/zenith.js";
+} from "./src/daily.js";
 
 import {
  swap,
