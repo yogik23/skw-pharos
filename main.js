@@ -143,8 +143,8 @@ async function startBot() {
 
     try {
       //await dailySendCoin(wallet);      
-      //await swapzenith(wallet);
-      //await LPzenith(wallet);
+      await swapzenith(wallet);
+      await LPzenith(wallet);
       await swapLPfaro(wallet);
 
       const result = await deployToken(wallet);
