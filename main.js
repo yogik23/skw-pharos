@@ -76,32 +76,34 @@ async function dailySendCoin(wallet) {
 }
 
 async function swapzenith(wallet) {
-  await deposit(wallet, WPHRS_ZENITH, "0.01");
+  const amountdeposit = randomAmount(0.01, 0.05, 2);
+  const amountWPHRS = randomAmount(0.001, 0.007, 3);
+  const amountUSDTUSDC = randomAmount(0.01, 0.4, 2);
+
+  await deposit(wallet, WPHRS_ZENITH, amountdeposit);
   await delay(randomdelay());
 
-  const amountWPHRStoUSDC = randomAmount(0.001, 0.007, 3);
-  await swap(wallet, WPHRS_ZENITH, USDC_address, amountWPHRStoUSDC);
+  await swap(wallet, WPHRS_ZENITH, USDC_address, amountWPHRS);
   await delay(randomdelay());
 
-  const amountWPHRStoUSDT = randomAmount(0.001, 0.007, 3);
-  await swap(wallet, WPHRS_ZENITH, USDT_address, amountWPHRStoUSDT);
+  await swap(wallet, WPHRS_ZENITH, USDT_address, amountWPHRS);
   await delay(randomdelay());
 
-  const amountUSDCtoUSDC = randomAmount(0.1, 0.4, 2);
-  await swap(wallet, oldUSDC_address, USDC_address, amountUSDCtoUSDC);
+  await swap(wallet, USDT_address, USDC_address, amountUSDTUSDC);
   await delay(randomdelay());
 
-  const amountUSDTtoUSDT = randomAmount(0.1, 0.4, 2);
-  await swap(wallet, oldUSDT_address, USDT_address, amountUSDTtoUSDT);
+  await swap(wallet, USDC_address, USDT_address, amountUSDTUSDC);
   await delay(randomdelay());
 }
 
 async function LPzenith(wallet) {
   const fee = 3000;
-  await addLiquidity(wallet, WPHRS_ZENITH, USDC_address, "0.001", fee);
+  const amountWPHRS = randomAmount(0.001, 0.005, 3);
+
+  await addLiquidity(wallet, WPHRS_ZENITH, USDC_address, amountWPHRS, fee);
   await delay(randomdelay());
 
-  await increaseLiquidity(wallet, WPHRS_ZENITH, USDC_address, "0.001", fee);
+  await addLiquidity(wallet, WPHRS_ZENITH, USDT_address, amountWPHRS, fee);
   await delay(randomdelay());
 
   await colectfee(wallet);
@@ -112,26 +114,28 @@ async function LPzenith(wallet) {
 }
 
 async function swapLPfaro(wallet) {
-  //await deposit(wallet, WPHRS_FAROSWAP, "0.1");
-  //await delay(randomdelay());
+  const amountdeposit = randomAmount(0.01, 0.05, 2);
+  const amountWPHRS = randomAmount(0.001, 0.005, 3);
 
-  //await swapFaroswap(wallet, PHRS_address, USDT_address, "0.001");
-  //await delay(randomdelay());
-
-  const amountWPHRStoUSDC = randomAmount(0.001, 0.007, 3);
-  await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountWPHRStoUSDC);
+  await deposit(wallet, WPHRS_FAROSWAP, amountdeposit);
   await delay(randomdelay());
 
-  const amountWPHRStoUSDT = randomAmount(0.001, 0.007, 3);
-  await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountWPHRStoUSDT);
+  await swapFaroswap(wallet, PHRS_address, USDT_address, amountWPHRS);
   await delay(randomdelay());
 
-  const amountUSDCtoUSDC = randomAmount(0.0001, 0.005, 4);
-  await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountUSDCtoUSDC);
+  await swapFaroswap(wallet, PHRS_address, USDC_address, amountWPHRS);
   await delay(randomdelay());
 
-  const amountUSDTtoUSDT = randomAmount(0.001, 0.001, 3);
-  await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountUSDTtoUSDT);
+  await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountWPHRS);
+  await delay(randomdelay());
+
+  await swapERC20Faroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountWPHRS);
+  await delay(randomdelay());
+
+  await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDC_address, amountWPHRS);
+  await delay(randomdelay());
+
+  await addLiquidityFaroswap(wallet, WPHRS_FAROSWAP, USDT_address, amountWPHRS);
   await delay(randomdelay());
 }
 
@@ -142,7 +146,7 @@ async function startBot() {
     logger.account(`Wallet: ${wallet.address}`);
 
     try {
-      //await dailySendCoin(wallet);      
+      await dailySendCoin(wallet);      
       await swapzenith(wallet);
       await LPzenith(wallet);
       await swapLPfaro(wallet);
