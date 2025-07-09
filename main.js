@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import cron from "node-cron"
 import { logger } from "./skw/logger.js";
+import { displayskw } from "./skw/displayskw.js";
 import { userAgents } from "./skw/userAgents.js";
 import {
  provider,
@@ -148,6 +149,8 @@ async function swapLPfaro(wallet) {
 }
 
 async function startBot() {
+  displayskw();
+  await delay(6000);
   console.clear();
   for (const pk of privateKeys) {
     const wallet = new ethers.Wallet(pk, provider);
