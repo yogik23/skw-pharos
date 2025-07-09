@@ -35,6 +35,13 @@ import {
 } from "./skw/helper.js";
 
 import {
+ login,
+ getProfil,
+ daily,
+ verifySendCoin,
+} from "./src/zenith.js";
+
+import {
  swap,
  addLiquidity,
  colectfee,
@@ -62,14 +69,18 @@ async function dailySendCoin(wallet) {
   try {
     const token = await login(wallet, headers);
     if (token) {
+      const { totalPoint } = await getProfil(token, headers, wallet);
       await daily(token, headers, wallet);
       await verifySendCoin(token, headers, wallet);
+      return totalPoint;
     } else {
       logger.warn("Skip verifySendCoin karena token undefined");
     }
   } catch (err) {
-    logger.fail("Gagal dailySendCoin: " + (err.message || err));
+    logger.fail(`Gagal dailySendCoin: ${err.reason || err.message || 'unknown error'}\n`);
   }
+
+  return 0;
 }
 
 async function swapzenith(wallet) {
@@ -143,7 +154,7 @@ async function startBot() {
     logger.account(`Wallet: ${wallet.address}`);
 
     try {
-      await dailySendCoin(wallet);      
+      const totalPoint = await dailySendCoin(wallet);      
       await swapzenith(wallet);
       await LPzenith(wallet);
       await swapLPfaro(wallet);
@@ -153,6 +164,10 @@ async function startBot() {
         await sendDeployToken(result.tokencontract, wallet, result.symbol);
       }
       await delay(randomdelay());
+
+      const txCount = await provider.getTransactionCount(wallet.address);
+      logAccount(`Totaltx ${wallet.address} ->>: ${txCount}`);
+      await sendTG(wallet.address, txCount, totalPoint);
 
     } catch (err) {
       logger.fail(`Gagal proses wallet ${wallet.address}: ${err.message}\n`);
