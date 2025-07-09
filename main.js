@@ -39,7 +39,6 @@ import {
 import {
  swap,
  addLiquidity,
- increaseLiquidity,
  colectfee,
  removeLiquidity,
 } from "./src/zenith.js";
