@@ -30,10 +30,8 @@ import {
  sendcoin,
  approve,
  cekbalance,
- login,
- verifySendCoin,
- daily,
  deposit,
+ sendTG,
 } from "./skw/helper.js";
 
 import {
