@@ -169,7 +169,7 @@ async function startBot() {
       await delay(randomdelay());
 
       const txCount = await provider.getTransactionCount(wallet.address);
-      logger.accountt(`Totaltx ${wallet.address} ->>: ${txCount}`);
+      logger.account(`Totaltx ${wallet.address} ->>: ${txCount}`);
       await sendTG(wallet.address, txCount, totalPoint);
 
     } catch (err) {
