@@ -17,6 +17,11 @@ export const privateKeys = fs.readFileSync(path.join(__dirname, "../privatekey.t
   .map(k => k.trim())
   .filter(k => k.length > 0);
 
+export const receivers = fs.readFileSync(path.join(__dirname, "../receivers.txt"), "utf-8")
+  .split("\n")
+  .map(k => k.trim())
+  .filter(k => k.length > 0);
+
 export function generateAddresses(count) {
   const wallets = [];
   for (let i = 0; i < count; i++) {
