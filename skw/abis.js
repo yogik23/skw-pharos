@@ -38,3 +38,9 @@ export const SWAP_ABI = ["function multicall(uint256, bytes[])"];
 export const LP_FAROSWAP_ABI = [
   "function addLiquidity(address tokenIn, address tokenOut, uint256 flag, uint256 amountIn, uint256 amountOut, uint256 amountInMin, uint256 amountOutMin, address to, uint256 deadline)"
 ];
+
+export const OpenFi_ABI = [
+  "function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)",
+  "function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)",
+  "function getUserAccountData(address user) view returns (uint256 totalCollateralBase, uint256 totalDebtBase, uint256 availableBorrowsBase, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor)"
+];
