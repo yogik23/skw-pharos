@@ -35,6 +35,8 @@ export const nftAbi = [
 
 export const SWAP_ABI = ["function multicall(uint256, bytes[])"];
 
+export const Send_ABI = ["function tip((uint32,address),(string,string,uint256,uint256[])) external"];
+
 export const LP_FAROSWAP_ABI = [
   "function addLiquidity(address tokenIn, address tokenOut, uint256 flag, uint256 amountIn, uint256 amountOut, uint256 amountInMin, uint256 amountOutMin, address to, uint256 deadline)"
 ];
