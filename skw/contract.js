@@ -8,6 +8,7 @@ export const USDT_address = "0xd4071393f8716661958f766df660033b3d35fd29";
 export const ZENITH_ROUTER = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a";
 export const ZENITH_ADDRESS = "0xf8a1d4ff0f9b9af7ce58e1fc1833688f3bfd6115";
 export const FAROSWAP_ADDRESS = "0xf05af5e9dc3b1dd3ad0c087bd80d7391283775e0";
+export const Send_ROUTER = "0xd17512b7ec12880bd94eca9d774089ff89805f02";
 export const USDC_R2_PHAROS = "0x8bebfcbe5468f146533c182df3dfbf5ff9be00e2";
 export const R2USD_PHAROS = "0x4f5b54d4af2568cefafa73bb062e5d734b55aa05";
 export const sR2USD_PHAROS = "0xf8694d25947a0097cb2cea2fc07b071bdf72e1f8";
