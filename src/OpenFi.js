@@ -2,6 +2,8 @@ import { ethers } from "ethers";
 import { logger } from "../skw/logger.js";
 import { OpenFi_ABI } from "../skw/abis.js";
 import {
+ USDC_address,
+ USDT_address,
  OpenFi_GOLD,
  OpenFi_TESLA,
  OpenFi_ADDRESS,
@@ -103,19 +105,19 @@ export async function OpenFi(wallet) {
     const repeat = randomAmount(2, 4, 0);
     for (let i = 0; i < repeat; i++) {
       const supplyusdc = randomAmount(0.5, 1.5, 1);
-      await supply(wallet, tokenIn, supplyusdc);
+      await supply(wallet, USDC_address, supplyusdc);
       await delay(randomdelay());
 
       const supplyusdt = randomAmount(0.5, 1.5, 1);
-      await supply(wallet, tokenIn, supplyusdt);
+      await supply(wallet, USDT_address, supplyusdt);
       await delay(randomdelay());
 
       const borrowgold = randomAmount(0.002, 0.01, 3);
-      await borrow(wallet, gold, borrowgold);
+      await borrow(wallet, OpenFi_GOLD, borrowgold);
       await delay(randomdelay());
 
       const borrowtesla = randomAmount(0.00001, 0.0001, 6);
-      await borrow(wallet, gold, borrowtesla);
+      await borrow(wallet, OpenFi_TESLA, borrowtesla);
       await delay(randomdelay());
     }
   } catch (err) {
