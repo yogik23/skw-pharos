@@ -20,8 +20,6 @@ import {
  WBTC_address,
  USDC_address,
  USDT_address,
- oldUSDT_address,
- oldUSDC_address,
  ZENITH_ROUTER,
  ZENITH_ADDRESS,
  FAROSWAP_ADDRESS,
