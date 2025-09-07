@@ -32,12 +32,14 @@ async function dailylogin(wallet) {
     if (token) {
       const { totalPoint } = await getProfil(token, headers, wallet);
       await daily(token, headers, wallet);
+      return totalPoint;
     } else {
       logger.warn("Skip dailylogin karena token undefined");
     }
   } catch (err) {
     logger.fail(`Gagal dailylogin: ${err.reason || err.message || 'unknown error'}\n`);
   }
+  return 0;
 }
 
 async function startBot() {
@@ -49,7 +51,7 @@ async function startBot() {
     logger.account(`Wallet: ${wallet.address}`);
 
     try {
-      const totalPoint = await dailySendCoin(wallet);
+      const totalPoint = await dailylogin(wallet);
       await sendtoX(wallet);
       await R2pharos(wallet);
       await OpenFi(wallet);
