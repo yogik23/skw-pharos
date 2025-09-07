@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
-import { logger } from "./skw/logger.js";
+import { logger } from "../skw/logger.js";
 import { Send_ABI } from "../skw/abis.js";
 import {
  delay,
  randomdelay,
  randomAmount,
  receivers,
-} from "./skw/config.js";
+} from "../skw/config.js";
 
 import {
  Send_ROUTER,
