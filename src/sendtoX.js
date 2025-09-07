@@ -5,6 +5,7 @@ import {
  delay,
  randomdelay,
  randomAmount,
+ receivers,
 } from "./skw/config.js";
 
 import {
