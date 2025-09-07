@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { logger } from "../skw/logger.js";
 import { Send_ABI } from "../skw/abis.js";
 import {
+ provider,
  delay,
  randomdelay,
  randomAmount,
