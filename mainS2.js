@@ -3,6 +3,7 @@ import cron from "node-cron"
 import { logger } from "./skw/logger.js";
 import { displayskw } from "./skw/displayskw.js";
 import { userAgents } from "./skw/userAgents.js";
+import { sendTG } from "./skw/helper.js";
 import { R2pharos } from "./src/r2.js";
 import { OpenFi } from "./src/OpenFi.js";
 import { sendtoX } from "./src/sendtoX.js";
